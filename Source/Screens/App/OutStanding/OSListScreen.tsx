@@ -3,12 +3,14 @@ import React, {useEffect} from 'react';
 import {useAppDispatch, useAppSelector} from '@ReduxHook';
 import {GetSaleOS} from 'Reducers';
 import {SafeAreaView} from 'react-native';
-import {Colors} from '@Constants';
+import {Colors, NavigationRoutes} from '@Constants';
 import normalize from 'react-native-normalize';
 import {RNCText} from 'Common';
+import {useNavigation} from '@react-navigation/native';
 
 const OSListScreen = () => {
   const dispatch = useAppDispatch();
+  const navigation = useNavigation();
   const {SaleOS} = useAppSelector(({DBReducer}) => DBReducer);
   console.log('SaleOS', SaleOS);
   useEffect(() => {
@@ -36,7 +38,7 @@ const OSListScreen = () => {
                   height: normalize(60),
                   justifyContent: 'center',
                 }}
-                onPress={() => console.log('item.accid', item.accid)}>
+                onPress={() => navigation.navigate('OSData', {item})}>
                 <View
                   style={{
                     flexDirection: 'row',
