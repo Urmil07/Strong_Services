@@ -73,7 +73,7 @@ const RNCStyle = StyleSheet.create({
     },
   },
   Btn: {
-    backgroundColor: Colors.backgroundSecondary,
+    backgroundColor: Colors.btn,
     borderRadius: 12,
     padding: normalize(13),
     justifyContent: 'center',

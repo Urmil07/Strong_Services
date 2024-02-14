@@ -1,247 +1,202 @@
-import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
-import React, {useState} from 'react';
-import {RouteProp, useRoute} from '@react-navigation/native';
-import {Colors, FontFamily} from '@Constants';
-import {RNCText} from 'Common';
+import {
+  FlatList,
+  Pressable,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  View,
+} from 'react-native';
+import React, {useEffect} from 'react';
+import {useAppDispatch, useAppSelector} from '@ReduxHook';
+import {GetPartyWiseSaleOS} from 'Reducers';
+import {OSDataPageProps} from '@/Interfaces/AppStackParamList';
+import {Colors, FontFamily, FontSize, isAndroid} from '@Constants';
 import normalize from 'react-native-normalize';
+import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
+import {RNCText} from 'Common';
+import moment from 'moment';
 
-type ParamList = {
-  OSData: {item: SaleOSInterfase};
-};
+const OSData = ({navigation, route}: OSDataPageProps) => {
+  const {accid, compid, partyName} = route.params;
+  const dispatch = useAppDispatch();
+  const {PartyWiseOS} = useAppSelector(({DBReducer}) => DBReducer);
 
-const OSData = () => {
-  const route = useRoute<RouteProp<ParamList, 'OSData'>>();
-  const {accid, accname, data, totalbill} = route.params.item!;
+  useEffect(() => {
+    dispatch(GetPartyWiseSaleOS(route.params));
+  }, []);
 
-  const Date = new Intl.DateTimeFormat('en-US');
   const {format} = new Intl.NumberFormat('hi-IN', {
     style: 'currency',
     currency: 'INR',
   });
 
-  const [showFields, setShowFields] = useState({
-    accid: true,
-    accname: true,
-    agentid: true,
-    agentname: true,
-    balamt: true,
-    billamt: true,
-    bookname: true,
-    cityname: true,
-    compid: true,
-    compname: true,
-    customeremail: true,
-    days: true,
-    entryemail: true,
-    entryid: true,
-    invdate: true,
-    invnochr: true,
-    mobile: true,
-    prevrecamt: true,
-    recamt: true,
-    returnamt: true,
-    runbalamt: true,
-    saleosid: true,
-  });
-
   return (
-    <View style={styles.container}>
+    <View style={{flex: 1}}>
+      <SafeAreaView style={{backgroundColor: Colors.card}} />
+      <StatusBar backgroundColor={Colors.card} />
+
       <View
         style={{
-          borderRadius: 12,
-          overflow: 'hidden',
-          backgroundColor: Colors.backgroundSecondary,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: Colors.card,
+          paddingVertical: isAndroid ? normalize(10) : 0,
         }}>
-        <ScrollView
-          horizontal
-          bounces={false}
-          showsHorizontalScrollIndicator={false}>
-          <View style={{}}>
-            <View style={{flexDirection: 'row'}}>
-              <View style={[styles.header, {width: '5%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  Inc No
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '6%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  Date
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '12%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  AccName
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '6%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  BalAmt
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '6%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  City
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '6%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  Mobile
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '6%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  BillAmt
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '6%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  PrevrecAmt
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '6%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  ReturnAmt
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '6%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  RecAmt
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '6%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  RunBalAmt
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '5%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  Days
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '10%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  BookName
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '10%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  CompName
-                </RNCText>
-              </View>
-              <View style={[styles.header, {width: '10%'}]}>
-                <RNCText color={Colors.White} family={FontFamily.SemiBold}>
-                  AgentName
-                </RNCText>
-              </View>
-            </View>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{}}>
-              <View style={{flex: 1}}>
-                {data.map((row, rowIndex) => (
-                  <View style={[{flexDirection: 'row'}]} key={rowIndex}>
-                    <View style={[styles.row, {width: '5%'}]}>
-                      <RNCText color={Colors.White}>{row.invnochr}</RNCText>
-                      {/* <RNCText color={Colors.White}>999999</RNCText> */}
-                    </View>
-                    <View style={[styles.row, {width: '6%'}]}>
-                      {/* <RNCText color={Colors.White}>{row.invdate}</RNCText> */}
-                      <RNCText color={Colors.White}>{row.invdate}</RNCText>
-                      {/* <RNCText color={Colors.White}>99-99-9999</RNCText> */}
-                    </View>
-                    <View
-                      style={[
-                        styles.row,
-                        {width: '12%', alignItems: 'flex-start'},
-                      ]}>
-                      <RNCText color={Colors.White} numberOfLines={1}>
-                        {row.accname}
-                      </RNCText>
-                    </View>
-                    <View
-                      style={[
-                        styles.row,
-                        {width: '6%', alignItems: 'flex-end'},
-                      ]}>
-                      <RNCText color={Colors.White}>
-                        {format(Number(row.balamt))}
-                      </RNCText>
-                      {/* <RNCText color={Colors.White}>
-                        {format(999999.99)}
-                      </RNCText> */}
-                    </View>
-                    <View style={[styles.row, {width: '6%'}]}>
-                      <RNCText color={Colors.White} numberOfLines={1}>
-                        {row.cityname}
-                      </RNCText>
-                    </View>
-                    <View style={[styles.row, {width: '6%'}]}>
-                      <RNCText color={Colors.White}>{row.mobile}</RNCText>
-                      {/* <RNCText color={Colors.White}>9999999999</RNCText> */}
-                    </View>
-                    <View
-                      style={[
-                        styles.row,
-                        {width: '6%', alignItems: 'flex-end'},
-                      ]}>
-                      <RNCText color={Colors.White}>
-                        {format(Number(row.billamt))}
-                      </RNCText>
-                    </View>
-                    <View
-                      style={[
-                        styles.row,
-                        {width: '6%', alignItems: 'flex-end'},
-                      ]}>
-                      <RNCText color={Colors.White}>
-                        {format(Number(row.prevrecamt))}
-                      </RNCText>
-                    </View>
-                    <View
-                      style={[
-                        styles.row,
-                        {width: '6%', alignItems: 'flex-end'},
-                      ]}>
-                      <RNCText color={Colors.White}>
-                        {format(Number(row.returnamt))}
-                      </RNCText>
-                    </View>
-                    <View
-                      style={[
-                        styles.row,
-                        {width: '6%', alignItems: 'flex-end'},
-                      ]}>
-                      <RNCText color={Colors.White}>
-                        {format(Number(row.recamt))}
-                      </RNCText>
-                    </View>
-                    <View
-                      style={[
-                        styles.row,
-                        {width: '6%', alignItems: 'flex-end'},
-                      ]}>
-                      <RNCText color={Colors.White}>
-                        {format(Number(row.runbalamt))}
-                      </RNCText>
-                    </View>
-                    <View style={[styles.row, {width: '5%'}]}>
-                      <RNCText color={Colors.White}>{row.days}</RNCText>
-                    </View>
-                    <View style={[styles.row, {width: '10%'}]}>
-                      <RNCText color={Colors.White}>{row.bookname}</RNCText>
-                    </View>
-                    <View style={[styles.row, {width: '10%'}]}>
-                      <RNCText color={Colors.White}>{row.compname}</RNCText>
-                    </View>
-                    <View style={[styles.row, {width: '10%'}]}>
-                      <RNCText color={Colors.White}>{row.agentname}</RNCText>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </ScrollView>
+        <View
+          style={{
+            alignItems: 'center',
+            flexDirection: 'row',
+            gap: 10,
+            left: normalize(15),
+          }}>
+          <Pressable
+            style={{padding: normalize(10), borderRadius: 100}}
+            onPress={() => navigation.goBack()}>
+            <FontAwesome6Icon
+              name="chevron-left"
+              size={normalize(20)}
+              color={Colors.WText}
+            />
+          </Pressable>
+          <RNCText
+            family={FontFamily.SemiBold}
+            size={FontSize.font18}
+            color={Colors.WText}>
+            Out Standing
+          </RNCText>
+        </View>
+        <View />
+      </View>
+
+      <View style={{flex: 1, padding: normalize(10), gap: 7}}>
+        <View
+          style={{
+            backgroundColor: Colors.White + 50,
+            padding: normalize(5),
+            borderRadius: 8,
+          }}>
+          <RNCText family={FontFamily.SemiBold}>{partyName}</RNCText>
+        </View>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: Colors.White + 50,
+            borderRadius: 8,
+            padding: normalize(5),
+          }}>
+          <View
+            style={{
+              width: '40%',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <RNCText></RNCText>
           </View>
-        </ScrollView>
+          <View
+            style={{
+              width: '30%',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+            }}>
+            <RNCText size={FontSize.font12} family={FontFamily.Bold}>
+              Bill Amount
+            </RNCText>
+          </View>
+          <View
+            style={{
+              width: '30%',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+            }}>
+            <RNCText size={FontSize.font12} family={FontFamily.Bold}>
+              Bal. Amount
+            </RNCText>
+          </View>
+        </View>
+        
+        <FlatList
+          data={PartyWiseOS}
+          // keyExtractor={(item, index) => index.toString()}
+          showsVerticalScrollIndicator={false}
+          renderItem={({item, index}) => {
+            return (
+              <View
+                style={{
+                  backgroundColor: Colors.White + '80',
+                  paddingVertical: normalize(6),
+                  paddingHorizontal: normalize(8),
+                  borderRadius: 8,
+                  justifyContent: 'center',
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}>
+                  <RNCText size={FontSize.font11} family={FontFamily.Bold}>
+                    {moment(item.invdate).format('DD/MM/YYYY')}
+                  </RNCText>
+                  <RNCText family={FontFamily.Black} size={FontSize.font18}>
+                    ﹒
+                  </RNCText>
+                  <RNCText size={FontSize.font11} family={FontFamily.Bold}>
+                    {item.bookname}
+                  </RNCText>
+                </View>
+                <View style={{flexDirection: 'row'}}>
+                  <View style={{width: '40%'}}>
+                    <RNCText size={FontSize.font11}>
+                      Due Days :{' '}
+                      <RNCText size={FontSize.font11}>{item.days}</RNCText>
+                    </RNCText>
+                  </View>
+                  <View
+                    style={{
+                      width: '30%',
+                      alignItems: 'flex-end',
+                      justifyContent: 'center',
+                    }}>
+                    <RNCText
+                      size={FontSize.font12}
+                      family={FontFamily.SemiBold}>
+                      {format(Number(item.billamt))}
+                    </RNCText>
+                  </View>
+                  <View
+                    style={{
+                      width: '30%',
+                      alignItems: 'flex-end',
+                      justifyContent: 'center',
+                    }}>
+                    <RNCText
+                      size={FontSize.font12}
+                      family={FontFamily.SemiBold}>
+                      {format(Number(item.balamt))}
+                    </RNCText>
+                  </View>
+                </View>
+              </View>
+            );
+          }}
+          contentContainerStyle={{gap: 5}}
+          style={{marginBottom: 10, flex: 1}}
+          ListEmptyComponent={() => (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <RNCText family={FontFamily.Bold} size={FontSize.font20}>
+                No Data...
+              </RNCText>
+            </View>
+          )}
+        />
       </View>
     </View>
   );
@@ -249,26 +204,4 @@ const OSData = () => {
 
 export default OSData;
 
-const styles = StyleSheet.create({
-  container: {flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff'},
-  header: {
-    padding: normalize(10),
-    height: normalize(40),
-    borderLeftWidth: 1,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.White,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#537791',
-  },
-  text: {textAlign: 'center', fontWeight: '100'},
-  dataWrapper: {marginTop: -1},
-  row: {
-    padding: normalize(10),
-    height: normalize(40),
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.White,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const styles = StyleSheet.create({});

@@ -1,11 +1,12 @@
-import {View, Text} from 'react-native';
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {Colors, NavigationRoutes} from '@/Constants';
-import {Home, OSListScreen} from 'App';
+import {Colors} from '@/Constants';
+import {ColdList, Home, LedgerScreen, OSListFilter, OSListScreen} from 'App';
 import OSData from '@/Screens/App/OutStanding/OSData';
+import {AppStackParamList} from '@/Interfaces/AppStackParamList';
+import LedgerDetailScreen from '@/Screens/App/Ledger/LedgerDetailScreen';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<AppStackParamList>();
 
 const AppStack = () => {
   return (
@@ -13,10 +14,19 @@ const AppStack = () => {
       screenOptions={{
         headerShown: false,
         contentStyle: {backgroundColor: Colors.background},
+        orientation: 'portrait',
+        animation: 'slide_from_right',
       }}>
-      <Stack.Screen name={NavigationRoutes.HOME} component={Home} />
-      <Stack.Screen name={NavigationRoutes.OSList} component={OSListScreen} />
+      <Stack.Screen name={'Home'} component={Home} />
+      <Stack.Screen name={'OSListScreen'} component={OSListScreen} />
       <Stack.Screen name="OSData" component={OSData} />
+      <Stack.Screen name={'OSListFilter'} component={OSListFilter} />
+      <Stack.Screen name={'LedgerScreen'} component={LedgerScreen} />
+      <Stack.Screen
+        name={'LedgerDetailScreen'}
+        component={LedgerDetailScreen}
+      />
+      <Stack.Screen name={'ColdList'} component={ColdList} />
     </Stack.Navigator>
   );
 };

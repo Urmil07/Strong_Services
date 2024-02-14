@@ -106,7 +106,7 @@ export interface Dataledger {
   entryemail: string;
   compid: string;
   accid: string;
-  party?: any;
+  party: string;
   ldate?: any;
   account?: any;
   cheque?: any;

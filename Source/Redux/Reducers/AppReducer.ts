@@ -1,9 +1,18 @@
 import {FetchMethod, URL} from '@Constants';
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {Estronglogin} from './LoginReducer';
-import {DeleteTable, db} from '@/DB/database';
+import {DeleteTable, db, getDBConnection} from '@/DB/database';
 import {EstrongReportInterface} from '@/Interfaces/ReportInterface';
-import {GetSaleOS} from './DBReducer';
+import {
+  GetFilterData,
+  GetLedger,
+  GetLotWise,
+  GetPartyWiseLedger,
+  GetPartyWiseSaleOS,
+  GetPurchaseOS,
+  GetSaleOS,
+} from './DBReducer';
+import {SQLiteDatabase} from 'react-native-sqlite-storage';
 
 const initialState = {
   Loading: false,
@@ -195,7 +204,8 @@ export const EstrongReport = createAsyncThunk(
       //   ],
       // };
 
-      await AddData(response);
+      const db = await getDBConnection();
+      await AddFetchData(response, db);
 
       return response;
     } catch (error) {
@@ -205,42 +215,16 @@ export const EstrongReport = createAsyncThunk(
   },
 );
 
-const AddData = async (response: EstrongReportInterface) => {
-  const DB = await db;
+const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
   return new Promise<void>(async (resolve, reject) => {
-    if (response.status == 200) {
+    if (response.status === 200) {
       if (response.data_saleos.length > 0) {
         await DeleteTable('saleosmst');
-        DB.transaction(tx => {
-          response.data_saleos.forEach(data => {
-            const {
-              accid,
-              accname,
-              agentid,
-              agentname,
-              balamt,
-              billamt,
-              bookname,
-              cityname,
-              compid,
-              compname,
-              customeremail,
-              days,
-              entryemail,
-              entryid,
-              invdate,
-              invnochr,
-              mobile,
-              prevrecamt,
-              recamt,
-              returnamt,
-              runbalamt,
-              saleosid,
-            } = data;
 
-            tx.executeSql(
-              `INSERT INTO saleosmst (accid,accname,agentid,agentname,balamt,billamt,bookname,cityname,compid,compname,customeremail,days,entryemail,entryid,invdate,invnochr,mobile,prevrecamt,recamt,returnamt,runbalamt,saleosid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-              [
+        await db.transaction(tx => {
+          const Rdata_saleos = response.data_saleos.map(data => {
+            return new Promise<number>(async (resolve, reject) => {
+              const {
                 accid,
                 accname,
                 agentid,
@@ -263,53 +247,64 @@ const AddData = async (response: EstrongReportInterface) => {
                 returnamt,
                 runbalamt,
                 saleosid,
-              ],
-              (tx, results) => {
-                // console.log(`New Data >>>>>>> saleosmst`);
-              },
-              error => {
-                console.log('error', JSON.stringify(error, null, 2));
-                console.error(
-                  `Error inserting ${saleosid} into the database: ${error} Table >>>>> saleosmst`,
-                );
-              },
-            );
+              } = data;
+
+              tx.executeSql(
+                `INSERT INTO saleosmst (accid,accname,agentid,agentname,balamt,billamt,bookname,cityname,compid,compname,customeremail,days,entryemail,entryid,invdate,invnochr,mobile,prevrecamt,recamt,returnamt,runbalamt,saleosid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                [
+                  accid,
+                  accname,
+                  agentid,
+                  agentname,
+                  balamt,
+                  billamt,
+                  bookname,
+                  cityname,
+                  compid,
+                  compname,
+                  customeremail,
+                  days,
+                  entryemail,
+                  entryid,
+                  invdate,
+                  invnochr,
+                  mobile,
+                  prevrecamt,
+                  recamt,
+                  returnamt,
+                  runbalamt,
+                  saleosid,
+                ],
+                (tx, results) => {
+                  if (results.rowsAffected > 0) {
+                    resolve(results.insertId);
+                  } else {
+                    reject(new Error(`Failed to insert: ${saleosid}`));
+                  }
+                },
+              );
+            });
           });
+
+          // Promise.all(Rdata_saleos)
+          //   .then(successResults => {
+          //     console.log('SaleOS successResults >>>>>');
+          //     DataSaleOs = true;
+          //   })
+          //   .catch(error => {
+          //     DataSaleOs = false;
+          //     console.error('Error in insert queries:', error);
+          //   });
         });
       }
 
       if (response.data_purcos.length > 0) {
         await DeleteTable('purcosmst');
-        DB.transaction(tx => {
-          response.data_purcos.forEach(data => {
-            const {
-              CustomerEmail,
-              accid,
-              accname,
-              agentid,
-              agentname,
-              balamt,
-              billamt,
-              bookname,
-              cityname,
-              compid,
-              compname,
-              days,
-              entryemail,
-              entryid,
-              invdate,
-              invnochr,
-              mobile,
-              prevrecamt,
-              purcosid,
-              recamt,
-              returnamt,
-              runbalamt,
-            } = data;
 
-            tx.executeSql(
-              `INSERT INTO purcosmst (CustomerEmail,accid,accname,agentid,agentname,balamt,billamt,bookname,cityname,compid,compname,days,entryemail,entryid,invdate,invnochr,mobile,prevrecamt,purcosid,recamt,returnamt,runbalamt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-              [
+        await db.transaction(tx => {
+          const Rdata_purcos = response.data_purcos.map(data => {
+            return new Promise<number>((resolve, reject) => {
+              const {
                 CustomerEmail,
                 accid,
                 accname,
@@ -332,15 +327,53 @@ const AddData = async (response: EstrongReportInterface) => {
                 recamt,
                 returnamt,
                 runbalamt,
-              ],
-              (tx, results) => {},
-              error => {
-                console.log('error', JSON.stringify(error, null, 2));
-                console.error(
-                  `Error inserting ${purcosid} into the database: ${error} Table >>>>> purcosmst`,
-                );
-              },
-            );
+              } = data;
+              console.log('data', data);
+              tx.executeSql(
+                `INSERT INTO purcosmst (CustomerEmail,accid,accname,agentid,agentname,balamt,billamt,bookname,cityname,compid,compname,days,entryemail,entryid,invdate,invnochr,mobile,prevrecamt,purcosid,recamt,returnamt,runbalamt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                [
+                  CustomerEmail,
+                  accid,
+                  accname,
+                  agentid,
+                  agentname,
+                  balamt,
+                  billamt,
+                  bookname,
+                  cityname,
+                  compid,
+                  compname,
+                  days,
+                  entryemail,
+                  entryid,
+                  invdate,
+                  invnochr,
+                  mobile,
+                  prevrecamt,
+                  purcosid,
+                  recamt,
+                  returnamt,
+                  runbalamt,
+                ],
+                (tx, results) => {
+                  console.log(
+                    'purcosmst results.rowsAffected',
+                    results.rowsAffected,
+                  );
+                  if (results.rowsAffected > 0) {
+                    resolve(results.insertId);
+                  } else {
+                    reject(new Error(`Failed to insert: ${invnochr}`));
+                  }
+                },
+                error => {
+                  console.log('error', JSON.stringify(error, null, 2));
+                  console.error(
+                    `Error inserting ${purcosid} into the database: ${error} Table >>>>> purcosmst`,
+                  );
+                },
+              );
+            });
           });
         });
       }
@@ -348,31 +381,10 @@ const AddData = async (response: EstrongReportInterface) => {
       if (response.data_ledger.length > 0) {
         await DeleteTable('ledgermst');
 
-        DB.transaction(tx => {
-          response.data_ledger.forEach(data => {
-            const {
-              accid,
-              account,
-              agentName,
-              balamt,
-              cheque,
-              cityname,
-              compid,
-              cramt,
-              crdr,
-              dramt,
-              entryemail,
-              entryid,
-              ldate,
-              ledgerid,
-              narration,
-              party,
-              remarks,
-            } = data;
-
-            tx.executeSql(
-              `INSERT INTO ledgermst (accid,account,agentName,balamt,cheque,cityname,compid,cramt,crdr,dramt,entryemail,entryid,ldate,ledgerid,narration,party,remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-              [
+        await db.transaction(tx => {
+          const Rdata_ledger = response.data_ledger.map(data => {
+            return new Promise<number>((resolve, reject) => {
+              const {
                 accid,
                 account,
                 agentName,
@@ -390,15 +402,38 @@ const AddData = async (response: EstrongReportInterface) => {
                 narration,
                 party,
                 remarks,
-              ],
-              (tx, results) => {},
-              error => {
-                console.log('error', JSON.stringify(error, null, 2));
-                console.error(
-                  `Error inserting ${ledgerid} into the database: ${error} Table >>>>> ledgermst`,
-                );
-              },
-            );
+              } = data;
+
+              tx.executeSql(
+                `INSERT INTO ledgermst (accid,account,agentName,balamt,cheque,cityname,compid,cramt,crdr,dramt,entryemail,entryid,ldate,ledgerid,narration,party,remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                [
+                  accid,
+                  account,
+                  agentName,
+                  balamt,
+                  cheque,
+                  cityname,
+                  compid,
+                  cramt,
+                  crdr,
+                  dramt,
+                  entryemail,
+                  entryid,
+                  ldate,
+                  ledgerid,
+                  narration,
+                  party,
+                  remarks,
+                ],
+                (tx, results) => {
+                  if (results.rowsAffected > 0) {
+                    resolve(results.insertId);
+                  } else {
+                    reject(new Error(`Failed to insert: ${ledgerid}`));
+                  }
+                },
+              );
+            });
           });
         });
       }
@@ -406,50 +441,10 @@ const AddData = async (response: EstrongReportInterface) => {
       if (response.data_coldmst.length > 0) {
         await DeleteTable('coldmst');
 
-        DB.transaction(tx => {
-          response.data_coldmst.forEach(data => {
-            const {
-              InwGridremarks,
-              OutGridremarks,
-              OutwardChlDt,
-              OutwardLrDt,
-              SerialDt,
-              VehicleNo,
-              accid,
-              accname,
-              agentid,
-              agentname,
-              balqty,
-              balweight,
-              bookname,
-              cadno,
-              chamberlocation,
-              chldt,
-              coldid,
-              compid,
-              compname,
-              delparty,
-              entryemail,
-              entryid,
-              inwremark,
-              itemname,
-              lotno,
-              netbalqty,
-              outqty,
-              outwardnochr,
-              outweight,
-              outwrdcadno,
-              outwrdremark,
-              partylot,
-              qty,
-              srnochr,
-              vakkal,
-              weight,
-            } = data;
-
-            tx.executeSql(
-              `INSERT INTO coldmst (InwGridremarks,OutGridremarks,OutwardChlDt,OutwardLrDt,SerialDt,VehicleNo,accid,accname,agentid,agentname,balqty,balweight,bookname,cadno,chamberlocation,chldt,coldid,compid,compname,delparty,entryemail,entryid,inwremark,itemname,lotno,netbalqty,outqty,outwardnochr,outweight,outwrdcadno,outwrdremark,partylot,qty,srnochr,vakkal,weight) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-              [
+        await db.transaction(tx => {
+          const Rdata_coldmst = response.data_coldmst.map(data => {
+            return new Promise<number>((resolve, reject) => {
+              const {
                 InwGridremarks,
                 OutGridremarks,
                 OutwardChlDt,
@@ -486,55 +481,67 @@ const AddData = async (response: EstrongReportInterface) => {
                 srnochr,
                 vakkal,
                 weight,
-              ],
-              (tx, results) => {},
-              error => {
-                console.log('error', JSON.stringify(error, null, 2));
-                console.error(
-                  `Error inserting ${coldid} into the database: ${error} Table >>>>> coldmst`,
-                );
-              },
-            );
+              } = data;
+
+              tx.executeSql(
+                `INSERT INTO coldmst (InwGridremarks,OutGridremarks,OutwardChlDt,OutwardLrDt,SerialDt,VehicleNo,accid,accname,agentid,agentname,balqty,balweight,bookname,cadno,chamberlocation,chldt,coldid,compid,compname,delparty,entryemail,entryid,inwremark,itemname,lotno,netbalqty,outqty,outwardnochr,outweight,outwrdcadno,outwrdremark,partylot,qty,srnochr,vakkal,weight) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                [
+                  InwGridremarks,
+                  OutGridremarks,
+                  OutwardChlDt,
+                  OutwardLrDt,
+                  SerialDt,
+                  VehicleNo,
+                  accid,
+                  accname,
+                  agentid,
+                  agentname,
+                  balqty,
+                  balweight,
+                  bookname,
+                  cadno,
+                  chamberlocation,
+                  chldt,
+                  coldid,
+                  compid,
+                  compname,
+                  delparty,
+                  entryemail,
+                  entryid,
+                  inwremark,
+                  itemname,
+                  lotno,
+                  netbalqty,
+                  outqty,
+                  outwardnochr,
+                  outweight,
+                  outwrdcadno,
+                  outwrdremark,
+                  partylot,
+                  qty,
+                  srnochr,
+                  vakkal,
+                  weight,
+                ],
+                (tx, results) => {
+                  if (results.rowsAffected > 0) {
+                    resolve(results.insertId);
+                  } else {
+                    reject(new Error(`Failed to insert: ${coldid}`));
+                  }
+                },
+              );
+            });
           });
         });
       }
 
       if (response.data_coldstksummst.length > 0) {
         await DeleteTable('coldstksummst');
-        DB.transaction(tx => {
-          response.data_coldstksummst.forEach(data => {
-            const {
-              OutwardLrDt,
-              InwGridremarks,
-              accid,
-              accname,
-              agentid,
-              agentname,
-              balqty,
-              balweight,
-              bookname,
-              chldt,
-              chlnochr,
-              coldstkid,
-              compid,
-              compname,
-              entryemail,
-              entryid,
-              itemname,
-              lotno,
-              outqty,
-              outweight,
-              partylot,
-              qty,
-              serialdt,
-              srnochr,
-              vakkal,
-              weight,
-            } = data;
-
-            tx.executeSql(
-              `INSERT INTO coldstksummst (OutwardLrDt,InwGridremarks,accid,accname,agentid,agentname,balqty,balweight,bookname,chldt,chlnochr,coldstkid,compid,compname,entryemail,entryid,itemname,lotno,outqty,outweight,partylot,qty,serialdt,srnochr,vakkal,weight) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-              [
+        await db.transaction(tx => {
+          const Rdata_coldstksummst = response.data_coldstksummst.map(data => {
+            return new Promise<number>((resolve, reject) => {
+              const {
                 OutwardLrDt,
                 InwGridremarks,
                 accid,
@@ -561,67 +568,97 @@ const AddData = async (response: EstrongReportInterface) => {
                 srnochr,
                 vakkal,
                 weight,
-              ],
-              (tx, results) => {},
-              error => {
-                console.log('error', JSON.stringify(error, null, 2));
-                console.error(
-                  `Error inserting ${coldstkid} into the database: ${error} Table >>>>> coldstksummst`,
-                );
-              },
-            );
+              } = data;
+
+              tx.executeSql(
+                `INSERT INTO coldstksummst (OutwardLrDt,InwGridremarks,accid,accname,agentid,agentname,balqty,balweight,bookname,chldt,chlnochr,coldstkid,compid,compname,entryemail,entryid,itemname,lotno,outqty,outweight,partylot,qty,serialdt,srnochr,vakkal,weight) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                [
+                  OutwardLrDt,
+                  InwGridremarks,
+                  accid,
+                  accname,
+                  agentid,
+                  agentname,
+                  balqty,
+                  balweight,
+                  bookname,
+                  chldt,
+                  chlnochr,
+                  coldstkid,
+                  compid,
+                  compname,
+                  entryemail,
+                  entryid,
+                  itemname,
+                  lotno,
+                  outqty,
+                  outweight,
+                  partylot,
+                  qty,
+                  serialdt,
+                  srnochr,
+                  vakkal,
+                  weight,
+                ],
+                (tx, results) => {
+                  if (results.rowsAffected > 0) {
+                    resolve(results.insertId);
+                  } else {
+                    reject(new Error(`Failed to insert: ${coldstkid}`));
+                  }
+                },
+              );
+            });
           });
         });
       }
 
       if (response.data_itemmst.length > 0) {
         await DeleteTable('itemmst');
-        DB.transaction(tx => {
-          response.data_itemmst.forEach(data => {
-            const {
-              CompId,
-              EntryEmail,
-              ItemGrpName,
-              ItemName,
-              UnitName,
-              id,
-              itemid,
-            } = data;
 
-            tx.executeSql(
-              `INSERT INTO itemmst (CompId,EntryEmail,ItemGrpName,ItemName,UnitName,id,itemid) VALUES (?,?,?,?,?,?,?)`,
-              [CompId, EntryEmail, ItemGrpName, ItemName, UnitName, id, itemid],
-              (tx, results) => {},
-              error => {
-                console.log('error', JSON.stringify(error, null, 2));
-                console.error(
-                  `Error inserting ${id} into the database: ${error} Table >>>>> itemmst`,
-                );
-              },
-            );
+        await db.transaction(tx => {
+          const Rdata_itemmst = response.data_itemmst.map(data => {
+            return new Promise<number>((resolve, reject) => {
+              const {
+                CompId,
+                EntryEmail,
+                ItemGrpName,
+                ItemName,
+                UnitName,
+                id,
+                itemid,
+              } = data;
+
+              tx.executeSql(
+                `INSERT INTO itemmst (CompId,EntryEmail,ItemGrpName,ItemName,UnitName,id,itemid) VALUES (?,?,?,?,?,?,?)`,
+                [
+                  CompId,
+                  EntryEmail,
+                  ItemGrpName,
+                  ItemName,
+                  UnitName,
+                  id,
+                  itemid,
+                ],
+                (tx, results) => {
+                  if (results.rowsAffected > 0) {
+                    resolve(results.insertId);
+                  } else {
+                    reject(new Error(`Failed to insert: ${id}`));
+                  }
+                },
+              );
+            });
           });
         });
       }
 
       if (response?.data_compmst.length > 0) {
         await DeleteTable('compmst');
-        DB.transaction(tx => {
-          response.data_compmst.forEach(data => {
-            const {
-              compid,
-              compmaindb,
-              compname,
-              compyeardbname,
-              compyearname,
-              compyearwiseemail,
-              entryemail,
-              entryid,
-              installdate,
-            } = data;
-
-            tx.executeSql(
-              `INSERT INTO compmst (compid,compmaindb,compname,compyeardbname,compyearname,compyearwiseemail,entryemail,entryid,installdate) VALUES (?,?,?,?,?,?,?,?,?)`,
-              [
+        await db.transaction(tx => {
+          const Rdata_compmst = response.data_compmst.map(data => {
+            return new Promise<number>((resolve, reject) => {
+              const {
                 compid,
                 compmaindb,
                 compname,
@@ -631,20 +668,36 @@ const AddData = async (response: EstrongReportInterface) => {
                 entryemail,
                 entryid,
                 installdate,
-              ],
-              (tx, results) => {},
-              error => {
-                console.log('error', JSON.stringify(error, null, 2));
-                console.error(
-                  `Error inserting ${compid} into the database: ${error} Table >>>>> compmst`,
-                );
-              },
-            );
+              } = data;
+
+              tx.executeSql(
+                `INSERT INTO compmst (compid,compmaindb,compname,compyeardbname,compyearname,compyearwiseemail,entryemail,entryid,installdate) VALUES (?,?,?,?,?,?,?,?,?)`,
+                [
+                  compid,
+                  compmaindb,
+                  compname,
+                  compyeardbname,
+                  compyearname,
+                  compyearwiseemail,
+                  entryemail,
+                  entryid,
+                  installdate,
+                ],
+                (tx, results) => {
+                  if (results.rowsAffected > 0) {
+                    resolve(results.insertId);
+                  } else {
+                    reject(new Error(`Failed to insert: ${compid}`));
+                  }
+                },
+              );
+            });
           });
         });
       }
+
+      resolve();
     }
-    resolve();
   });
 };
 
@@ -664,7 +717,6 @@ const AppReducer = createSlice({
       state.Loading = true;
     });
     builder.addCase(EstrongReport.fulfilled, (state, action) => {
-      console.log('EstrongReport fulfilled >>>>>>>>>>>>>>>>>>>');
       state.Loading = false;
     });
     builder.addCase(EstrongReport.rejected, state => {
@@ -686,6 +738,60 @@ const AppReducer = createSlice({
       state.Loading = false;
     });
     builder.addCase(GetSaleOS.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetPurchaseOS.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetPurchaseOS.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetPurchaseOS.fulfilled, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetLedger.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetLedger.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetLedger.fulfilled, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetPartyWiseSaleOS.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetPartyWiseSaleOS.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetPartyWiseSaleOS.fulfilled, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetPartyWiseLedger.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetPartyWiseLedger.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetPartyWiseLedger.fulfilled, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetFilterData.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetFilterData.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetFilterData.fulfilled, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetLotWise.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetLotWise.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetLotWise.fulfilled, state => {
       state.Loading = false;
     });
   },

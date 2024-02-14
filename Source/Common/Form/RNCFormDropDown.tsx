@@ -3,15 +3,17 @@ import React from 'react';
 import {Dropdown} from 'react-native-element-dropdown';
 import normalize from 'react-native-normalize';
 import {Colors, FontFamily, FontSize} from '@Constants';
+import {Control, FieldPath, useController} from 'react-hook-form';
+import {FormValues} from '@/Interfaces/Common';
 
 export interface DropDownProps {
   Data: any[];
   maxHeight?: number;
-  value: string;
   activeColor?: string;
-  searchPlaceholderText?: string;
   placeholderText: string;
-  onChange: (text: {_index: number; label: string; value: string}) => void;
+  searchPlaceholderText?: string;
+  control: Control<FormValues>;
+  name: FieldPath<FormValues>;
   style?: ViewStyle;
   dropdownstyle?: ViewStyle;
   placeholderstyle?: TextStyle;
@@ -20,17 +22,16 @@ export interface DropDownProps {
   inputsearchstyle?: ViewStyle;
   containerstyle?: ViewStyle;
   iconstyle?: ImageStyle;
-  search?: boolean;
 }
 
-const RNCDropdown = (prop: DropDownProps) => {
+const RNCFormDropDown = (prop: DropDownProps) => {
   const {
+    control,
+    name,
     Data,
     maxHeight,
-    value,
     activeColor,
     placeholderText,
-    onChange,
     searchPlaceholderText,
     style,
     dropdownstyle,
@@ -38,11 +39,12 @@ const RNCDropdown = (prop: DropDownProps) => {
     selectedtextstyle,
     inputsearchstyle,
     iconstyle,
-    search,
     containerstyle,
     itemtextstyle,
     ...restProps
   } = prop;
+
+  const {field} = useController({control, defaultValue: '', name});
 
   return (
     <View style={[styles.container, style]}>
@@ -55,14 +57,13 @@ const RNCDropdown = (prop: DropDownProps) => {
         iconStyle={[styles.iconStyle, iconstyle]}
         containerStyle={[styles.containerStyle, containerstyle]}
         data={Data}
-        search={search}
         maxHeight={maxHeight || normalize(250)}
         labelField="label"
         valueField="value"
         placeholder={placeholderText}
-        searchPlaceholder={searchPlaceholderText}
-        value={value}
-        onChange={onChange}
+        searchPlaceholder={searchPlaceholderText ?? 'Search...'}
+        value={field.value}
+        onChange={value => field.onChange(value.value)}
         itemTextStyle={[styles.itemTextStyle, itemtextstyle]}
         fontFamily={FontFamily.Regular}
         {...restProps}
@@ -71,7 +72,7 @@ const RNCDropdown = (prop: DropDownProps) => {
   );
 };
 
-export default RNCDropdown;
+export default RNCFormDropDown;
 
 const styles = StyleSheet.create({
   container: {},
@@ -87,13 +88,11 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   placeholderStyle: {
-    fontSize: FontSize.font14,
-    fontFamily: FontFamily.Medium,
+    fontSize: FontSize.font13,
     color: Colors.Black,
   },
   selectedTextStyle: {
-    fontSize: FontSize.font14,
-    fontFamily: FontFamily.Medium,
+    fontSize: FontSize.font13,
     color: Colors.Black,
   },
   iconStyle: {
@@ -102,8 +101,8 @@ const styles = StyleSheet.create({
   },
   inputSearchStyle: {
     height: 40,
-    fontSize: FontSize.font14,
-    fontFamily: FontFamily.Medium,
+    fontSize: FontSize.font13,
+    color: Colors.Black,
   },
   itemTextStyle: {
     color: Colors.Black,

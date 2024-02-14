@@ -1,4 +1,12 @@
-import {View, Text, FlatList, Pressable} from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+} from 'react-native';
 import React, {useCallback, useEffect} from 'react';
 import {
   Colors,
@@ -12,21 +20,32 @@ import {RNCText} from 'Common';
 import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
 import {Functions} from '@Utils';
 import {useAppDispatch} from '@ReduxHook';
-import {EstrongReport, SetLoading} from 'Reducers';
-import {useNavigation} from '@react-navigation/native';
+import {
+  EstrongReport,
+  SetFilterLedger,
+  SetFilterList,
+  SetLoading,
+  SetMastLedger,
+  SetMastList,
+} from 'Reducers';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {StackNavigation} from '@/Interfaces/AppStackParamList';
+import {ScrollView} from 'react-native-gesture-handler';
+import {DB, createTable, getDBConnection} from '@/DB/database';
+import {SQLiteDatabase} from 'react-native-sqlite-storage';
 
 const Home = () => {
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigation>();
+  const focused = useIsFocused();
 
-  const CategoryData = [
-    {Id: 1, Name: 'Sale OS', Total: 999999, isLoack: false},
-    {Id: 2, Name: 'Purchase OS', Total: 999999, isLoack: false},
-    {Id: 3, Name: 'Ledger', Total: 999999, isLoack: false},
-    {Id: 4, Name: 'Lot Wise Report', Total: 999999, isLoack: false},
-    {Id: 5, Name: 'Account Wise Report', Total: 999999, isLoack: false},
-    {Id: 6, Name: 'Stock Summary Report', Total: 99999999, isLoack: true},
-  ];
+  useEffect(() => {
+    dispatch(SetFilterLedger([]));
+    dispatch(SetFilterList([]));
+    dispatch(SetMastLedger([]));
+    dispatch(SetMastList([]));
+  }, [focused]);
+
   const {format} = new Intl.NumberFormat('hi-In', {
     style: 'currency',
     currency: 'INR',
@@ -49,100 +68,190 @@ const Home = () => {
 
   return (
     <View style={{flex: 1}}>
-      <FlatList
-        data={CategoryData}
-        keyExtractor={item => item.Id.toString()}
-        renderItem={({index, item}) => {
-          return (
+      <SafeAreaView style={{backgroundColor: Colors.card}} />
+      <StatusBar backgroundColor={Colors.card} />
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: Colors.card,
+          padding: normalize(10),
+          paddingVertical: normalize(24),
+        }}>
+        <View />
+        <View style={{justifyContent: 'center', alignItems: 'center'}}>
+          <RNCText
+            family={FontFamily.Bold}
+            size={FontSize.font18}
+            color={Colors.WText}>
+            Welcome to Strong Services
+          </RNCText>
+        </View>
+        <View />
+      </View>
+      <ScrollView style={{flex: 1}}>
+        <RNCText
+          style={{marginBottom: normalize(12)}}
+          align="center"
+          family={FontFamily.Black}
+          size={FontSize.font18}>
+          Reports
+        </RNCText>
+
+        <View style={{padding: normalize(10), gap: normalize(12)}}>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
             <Pressable
-              style={{
-                backgroundColor: Colors.secondary,
-                // height: normalize(100),
-                width: normalize(175),
-                marginHorizontal: normalize(6),
-                borderRadius: 12,
-                overflow: 'hidden',
-                padding: normalize(5),
-                gap: 10,
-              }}
-              disabled={item.isLoack}
-              onPress={() => navigation.navigate(NavigationRoutes.OSList)}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  borderBottomWidth: 1,
-                  borderBottomColor: Colors.White,
-                }}>
-                <View
-                  style={{
-                    width: normalize(40),
-                    padding: normalize(4),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <FontAwesome6Icon
-                    name="truck-fast"
-                    color={Colors.White}
-                    size={normalize(20)}
-                  />
-                </View>
-                <View
-                  style={{
-                    flex: 1,
-                    padding: normalize(4),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <RNCText
-                    size={FontSize.font14}
-                    family={FontFamily.SemiBold}
-                    color={Colors.WText}
-                    numberOfLines={3}>
-                    {item.Name}
-                  </RNCText>
-                </View>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  // height: normalize(70),
-                  padding: normalize(10),
-                }}>
-                <View style={{flex: 1}}>
-                  <RNCText
-                    color={Colors.WText}
-                    family={FontFamily.Bold}
-                    size={FontSize.font17}>
-                    {item.isLoack ? '-' : format(item.Total)}
-                  </RNCText>
-                </View>
-                <View
-                  style={{
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    // backgroundColor: Colors.E855555,
-                    width: normalize(20),
-                    // padding: normalize(4),
-                    display: item.isLoack ? 'flex' : 'none',
-                  }}>
-                  <FontAwesome6Icon
-                    name="lock"
-                    color={Colors.White}
-                    size={normalize(14)}
-                  />
-                </View>
+              style={styles.box}
+              onPress={() =>
+                navigation.navigate('OSListScreen', {type: 'sale'})
+              }>
+              <RNCText
+                color={Colors.WText}
+                family={FontFamily.Bold}
+                size={FontSize.font16}>
+                SaleOS
+              </RNCText>
+              <View style={styles.arrowBtn}>
+                <FontAwesome6Icon
+                  name="arrow-right"
+                  size={normalize(16)}
+                  color={Colors.Black}
+                />
               </View>
             </Pressable>
-          );
-        }}
-        style={{marginTop: normalize(10)}}
-        numColumns={2}
-        contentContainerStyle={{gap: normalize(10), alignItems: 'center'}}
-      />
+            <Pressable
+              style={styles.box}
+              onPress={() =>
+                navigation.navigate('OSListScreen', {type: 'purchase'})
+              }>
+              <RNCText
+                color={Colors.WText}
+                family={FontFamily.Bold}
+                size={FontSize.font16}>
+                PurchaseOS
+              </RNCText>
+              <View style={styles.arrowBtn}>
+                <FontAwesome6Icon
+                  name="arrow-right"
+                  size={normalize(16)}
+                  color={Colors.Black}
+                />
+              </View>
+            </Pressable>
+          </View>
+
+          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+            <Pressable
+              style={styles.box}
+              onPress={() => navigation.navigate('LedgerScreen')}>
+              <RNCText
+                color={Colors.WText}
+                family={FontFamily.Bold}
+                size={FontSize.font16}>
+                Ledger
+              </RNCText>
+              <View style={styles.arrowBtn}>
+                <FontAwesome6Icon
+                  name="arrow-right"
+                  size={normalize(16)}
+                  color={Colors.Black}
+                />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+
+        <RNCText
+          style={{marginVertical: normalize(12)}}
+          align="center"
+          family={FontFamily.Black}
+          size={FontSize.font18}>
+          Cold/Warehouse Reports
+        </RNCText>
+
+        <View style={{padding: normalize(10), gap: normalize(12)}}>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+            <Pressable
+              style={styles.box}
+              onPress={() => navigation.navigate('ColdList', {type: 'lot'})}>
+              <RNCText
+                color={Colors.WText}
+                family={FontFamily.Bold}
+                size={FontSize.font16}>
+                Lot Wise
+              </RNCText>
+              <View style={styles.arrowBtn}>
+                <FontAwesome6Icon
+                  name="arrow-right"
+                  size={normalize(16)}
+                  color={Colors.Black}
+                />
+              </View>
+            </Pressable>
+            <Pressable
+              style={styles.box}
+              onPress={() =>
+                navigation.navigate('ColdList', {type: 'account'})
+              }>
+              <RNCText
+                color={Colors.WText}
+                family={FontFamily.Bold}
+                size={FontSize.font16}>
+                Acc. Wise
+              </RNCText>
+              <View style={styles.arrowBtn}>
+                <FontAwesome6Icon
+                  name="arrow-right"
+                  size={normalize(16)}
+                  color={Colors.Black}
+                />
+              </View>
+            </Pressable>
+          </View>
+
+          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+            <Pressable
+              style={styles.box}
+              onPress={() =>
+                navigation.navigate('ColdList', {type: 'summary'})
+              }>
+              <RNCText
+                color={Colors.WText}
+                family={FontFamily.Bold}
+                size={FontSize.font16}>
+                Stock Summ
+              </RNCText>
+              <View style={styles.arrowBtn}>
+                <FontAwesome6Icon
+                  name="arrow-right"
+                  size={normalize(16)}
+                  color={Colors.Black}
+                />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
+      <SafeAreaView />
     </View>
   );
 };
 
 export default Home;
+const styles = StyleSheet.create({
+  box: {
+    // height: normalize(150),
+    width: normalize(175),
+    backgroundColor: Colors.card,
+    borderRadius: 12,
+    alignItems: 'center',
+    gap: 12,
+    padding: normalize(12),
+  },
+  arrowBtn: {
+    backgroundColor: Colors.White + '90',
+    padding: normalize(10),
+    borderRadius: 100,
+  },
+});

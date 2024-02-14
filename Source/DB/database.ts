@@ -1,8 +1,26 @@
 // import SQLite from 'react-native-sqlite-2';
-import SQLite, {SQLiteDatabase} from 'react-native-sqlite-storage';
+import SQLite, {
+  SQLiteDatabase,
+  enablePromise,
+  openDatabase,
+} from 'react-native-sqlite-storage';
 
-// SQLite.enablePromise(true);
+SQLite.enablePromise(true);
 
+export const getDBConnection = async () => {
+  return SQLite.openDatabase({name: 'StrongServicesDB', location: 'default'});
+};
+
+// enablePromise(true);
+
+export let DB = async () => {
+  return new Promise<SQLiteDatabase>((resolve, reject) => {
+    SQLite.openDatabase({
+      name: 'StrongServicesDB',
+      location: 'default',
+    });
+  });
+};
 export let db = SQLite.openDatabase({
   name: 'StrongServicesDB',
   location: 'default',
@@ -233,15 +251,11 @@ const TableData = () => {
   ];
 };
 
-export const createTable = async () => {
+export const createTable = async (db: SQLiteDatabase) => {
   const Tables = TableData();
-  (await db).transaction(txn => {
-    Tables?.map(table => {
-      txn.executeSql(
-        `CREATE TABLE IF NOT EXISTS ${table.table_name}(${table.table_field})`,
-        [],
-      );
-    });
+  Tables?.map(async table => {
+    const query = `CREATE TABLE IF NOT EXISTS ${table.table_name} (${table.table_field})`;
+    await db.executeSql(query);
   });
 };
 

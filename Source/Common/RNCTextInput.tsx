@@ -9,6 +9,7 @@ import {Control, FieldPath, useController} from 'react-hook-form';
 
 // type Prop = TextInputPropsOptional & {
 type Prop = TextInputProps & {
+  containerStyle?: any;
   textInputStyle?: any;
   title: string;
   leftContainer?: any;
@@ -33,19 +34,20 @@ const RNCTextInput = (prop: Prop) => {
     rightContainer,
     title,
     name,
+    containerStyle,
     ...restOfProps
   } = prop;
   const inputRef = useRef<TextInput>(null);
   const {field} = useController({control, defaultValue: '', name});
   return (
-    <View style={{}}>
-      <RNCText
+    <View style={style}>
+      {/* <RNCText
         size={FontSize.font16}
         family={FontFamily.SemiBold}
         style={{left: normalize(12), marginBottom: normalize(2)}}>
         {title}
-      </RNCText>
-      <View style={styles.container}>
+      </RNCText> */}
+      <View style={[styles.container, containerStyle]}>
         {leftContainer}
         <TextInput
           ref={inputRef}
@@ -101,7 +103,7 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.Medium,
     fontSize: FontSize.font16,
     flex: 1,
-    color: Colors.White,
+    color: Colors.Black,
   },
   error: {
     marginTop: 4,

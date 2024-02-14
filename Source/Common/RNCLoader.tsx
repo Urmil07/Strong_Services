@@ -58,6 +58,6 @@ const styles = StyleSheet.create({
     height: normalize(110),
     width: normalize(110),
     borderRadius: 12,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.card,
   },
 });

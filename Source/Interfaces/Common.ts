@@ -5,6 +5,7 @@ export interface FormValues {
   EntryId: string;
   EntryPwd: string;
   AccountID: string;
+  LoginType: string;
 }
 
 export interface CustomDropDownProps {

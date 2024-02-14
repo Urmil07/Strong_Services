@@ -1,8 +1,23 @@
-interface SaleOSInterfase {
+interface OSInterfase {
   totalbill: string;
+  cityname: string;
   accid: string;
   accname: string;
-  data: SaleOSDataInterfase[];
+  compid: string;
+  compname: string;
+  id: string;
+  // data: SaleOSDataInterfase[];
+}
+
+interface AccLedgerInterfase {
+  ledgerid: string;
+  compid: string;
+  crdr: string;
+  balamt: string;
+  cityname: string;
+  accid: string;
+  party: string;
+  totalbal: string;
 }
 
 interface SaleOSDataInterfase {
@@ -30,4 +45,24 @@ interface SaleOSDataInterfase {
   recamt: string;
   returnamt: string;
   runbalamt: string;
+}
+
+interface LedgerDataInterfase {
+  accid: number;
+  account: string;
+  agentName: string;
+  balamt: number;
+  cheque: string;
+  cityname: string;
+  compid: number;
+  cramt: number;
+  crdr: string;
+  dramt: number;
+  entryemail: string;
+  entryid: number;
+  ldate: string;
+  ledgerid: number;
+  narration: string;
+  party: string;
+  remarks: string;
 }

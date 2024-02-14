@@ -1,22 +1,18 @@
-import {Pressable, SafeAreaView, StyleSheet, Text, View} from 'react-native';
+import {Pressable, SafeAreaView, StyleSheet, View} from 'react-native';
 import React, {useState} from 'react';
-import {Colors, FontFamily, FontSize, Images, normalize} from '@Constants';
-import {RNCButton, RNCText, RNCTextInput} from 'Common';
+import {Colors, Images, normalize} from '@Constants';
+import {RNCButton, RNCDropdown, RNCText, RNCTextInput} from 'Common';
 import FontAwesome from 'react-native-vector-icons/FontAwesome6';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FastImage from 'react-native-fast-image';
 import {useAppDispatch, useAppSelector} from '@ReduxHook';
-import {
-  EstrongReport,
-  Estronglogin,
-  SetIsAuth,
-  SetLoading,
-  SetToggleToast,
-} from 'Reducers';
-import {Functions} from '@Utils';
-import {Control, useForm} from 'react-hook-form';
+import {Estronglogin, SetIsAuth} from 'Reducers';
+import {useForm} from 'react-hook-form';
 import {FormValues} from '@/Interfaces/Common';
-import {useToast} from 'react-native-toast-notifications';
+
+const LoginType = [
+  {label: 'OWNER', value: 'OWNER'},
+  {label: 'CLIENT', value: 'CLIENT'},
+];
 
 const Login = () => {
   const dispatch = useAppDispatch();
@@ -28,8 +24,8 @@ const Login = () => {
     defaultValues: {
       // EntryId: 'patelwarehousing27@gmail.com',
       // EntryPwd: '3242',
-      EntryId: 'abhinandanagrocoldstorage@gmail.com',
-      EntryPwd: 'aa01',
+      // EntryId: 'abhinandanagrocoldstorage@gmail.com',
+      // EntryPwd: 'aa01',
       // AccountID: '1121',
     },
   });
@@ -63,11 +59,10 @@ const Login = () => {
         <View
           style={{
             flexDirection: 'row',
-            left: normalize(10),
             marginBottom: normalize(10),
             gap: 10,
           }}>
-          <Pressable
+          {/* <Pressable
             style={{
               backgroundColor:
                 ActiveTab == 'OWNER'
@@ -104,7 +99,15 @@ const Login = () => {
               setActiveTab('CLIENT');
             }}>
             <RNCText color={Colors.White}>CLIENT</RNCText>
-          </Pressable>
+          </Pressable> */}
+
+          <RNCDropdown
+            Data={LoginType}
+            value={ActiveTab}
+            placeholderText={'Select Login type...'}
+            onChange={text => setActiveTab(text.value)}
+            style={{flex: 1, padding: 0}}
+          />
         </View>
         {ActiveTab === 'OWNER' ? (
           <View style={{gap: 12}}>
@@ -112,12 +115,14 @@ const Login = () => {
               control={control}
               name="EntryId"
               title="EntryID"
+              placeholder="Enter Entry ID"
+              placeholderTextColor={Colors.Black}
               leftContainer={
                 <View style={styles.LeftContainer}>
                   <FontAwesome
                     name="user"
                     size={normalize(15)}
-                    color={Colors.White}
+                    color={Colors.Black}
                   />
                 </View>
               }
@@ -128,13 +133,15 @@ const Login = () => {
               onChangeText={() => null}
               title="Password"
               name="EntryPwd"
+              placeholder="Enter Password"
+              placeholderTextColor={Colors.Black}
               secureTextEntry={PasswordHide}
               leftContainer={
                 <View style={styles.LeftContainer}>
                   <FontAwesome
                     name="key"
                     size={normalize(15)}
-                    color={Colors.White}
+                    color={Colors.Black}
                   />
                 </View>
               }
@@ -145,7 +152,7 @@ const Login = () => {
                   <FontAwesome
                     name={PasswordHide ? 'eye' : 'eye-slash'}
                     size={normalize(15)}
-                    color={Colors.White}
+                    color={Colors.Black}
                   />
                 </Pressable>
               }
@@ -175,12 +182,14 @@ const Login = () => {
               control={control}
               title="EntryId"
               name="EntryId"
+              placeholder="Enter Entry ID"
+              placeholderTextColor={Colors.Black}
               leftContainer={
                 <View style={styles.LeftContainer}>
                   <FontAwesome
                     name="user"
                     size={normalize(15)}
-                    color={Colors.White}
+                    color={Colors.Black}
                   />
                 </View>
               }
@@ -190,12 +199,14 @@ const Login = () => {
               control={control}
               title="AccountID"
               name="AccountID"
+              placeholder="Enter Account ID"
+              placeholderTextColor={Colors.Black}
               leftContainer={
                 <View style={styles.LeftContainer}>
                   <FontAwesome
                     name="user"
                     size={normalize(15)}
-                    color={Colors.White}
+                    color={Colors.Black}
                   />
                 </View>
               }
@@ -207,12 +218,14 @@ const Login = () => {
               title="Password"
               control={control}
               secureTextEntry={PasswordHide}
+              placeholder="Enter Password"
+              placeholderTextColor={Colors.Black}
               leftContainer={
                 <View style={styles.LeftContainer}>
                   <FontAwesome
                     name="key"
                     size={normalize(15)}
-                    color={Colors.White}
+                    color={Colors.Black}
                   />
                 </View>
               }
@@ -223,7 +236,7 @@ const Login = () => {
                   <FontAwesome
                     name={PasswordHide ? 'eye' : 'eye-slash'}
                     size={normalize(15)}
-                    color={Colors.White}
+                    color={Colors.Black}
                   />
                 </Pressable>
               }
@@ -253,11 +266,6 @@ const Login = () => {
           style={{marginTop: normalize(15)}}
           onPress={handleSubmit(OnSubmit)}
         />
-        <RNCButton
-          name={'ShowToast'}
-          style={{marginTop: normalize(15)}}
-          onPress={() => null}
-        />
       </View>
     </SafeAreaView>
   );
@@ -271,14 +279,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: normalize(50),
     borderRightWidth: 1,
-    borderRightColor: Colors.White,
+    borderRightColor: Colors.Black,
   },
   RightContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     width: normalize(50),
     borderLeftWidth: 1,
-    borderLeftColor: Colors.White,
+    borderLeftColor: Colors.Black,
   },
   CheckBoxContainer: {
     justifyContent: 'flex-start',
