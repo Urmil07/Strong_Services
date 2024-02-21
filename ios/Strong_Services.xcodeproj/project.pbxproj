@@ -40,6 +40,7 @@
 		B2CB08452B5D88140066849B /* FontAwesome5_Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B2CB08322B5D88140066849B /* FontAwesome5_Regular.ttf */; };
 		B2CB08462B5D88140066849B /* SimpleLineIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B2CB08332B5D88140066849B /* SimpleLineIcons.ttf */; };
 		B2CB08472B5D88140066849B /* Octicons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B2CB08342B5D88140066849B /* Octicons.ttf */; };
+		B2D2DE3F2B7FC2ED003E97C0 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3F9C364892BE4475BE7A58B4 /* BootSplash.storyboard */; };
 		F37DEFCE9ACC4CF99FA4F60D /* Inter-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D1BB1C1B483F4CBEB1641BBE /* Inter-Regular.ttf */; };
 		F88C2F500146407AA8C5EC23 /* Inter-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 379D3CEE267A42E5A2DA0F10 /* Inter-Black.ttf */; };
 /* End PBXBuildFile section */
@@ -69,6 +70,7 @@
 		2BF74B24C0DE43C28155D7BF /* Inter-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Medium.ttf"; path = "../Source/Assets/Fonts/Inter-Medium.ttf"; sourceTree = "<group>"; };
 		379D3CEE267A42E5A2DA0F10 /* Inter-Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Black.ttf"; path = "../Source/Assets/Fonts/Inter-Black.ttf"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-Strong_Services.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Strong_Services.debug.xcconfig"; path = "Target Support Files/Pods-Strong_Services/Pods-Strong_Services.debug.xcconfig"; sourceTree = "<group>"; };
+		3F9C364892BE4475BE7A58B4 /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = /Users/urmil/RN/Strong_Services/ios/Strong_Services/BootSplash.storyboard; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-Strong_Services.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Strong_Services.release.xcconfig"; path = "Target Support Files/Pods-Strong_Services/Pods-Strong_Services.release.xcconfig"; sourceTree = "<group>"; };
 		5B7EB9410499542E8C5724F5 /* Pods-Strong_Services-Strong_ServicesTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Strong_Services-Strong_ServicesTests.debug.xcconfig"; path = "Target Support Files/Pods-Strong_Services-Strong_ServicesTests/Pods-Strong_Services-Strong_ServicesTests.debug.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-Strong_Services.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Strong_Services.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -148,6 +150,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				3F9C364892BE4475BE7A58B4 /* BootSplash.storyboard */,
 			);
 			name = Strong_Services;
 			sourceTree = "<group>";
@@ -355,6 +358,7 @@
 				B2CB083D2B5D88140066849B /* Zocial.ttf in Resources */,
 				B2CB08422B5D88140066849B /* FontAwesome.ttf in Resources */,
 				1EB243F867194C69AE207C60 /* Inter-Medium.ttf in Resources */,
+				B2D2DE3F2B7FC2ED003E97C0 /* BootSplash.storyboard in Resources */,
 				F37DEFCE9ACC4CF99FA4F60D /* Inter-Regular.ttf in Resources */,
 				B2CB08362B5D88140066849B /* MaterialCommunityIcons.ttf in Resources */,
 				B2CB08402B5D88140066849B /* FontAwesome6_Regular.ttf in Resources */,
@@ -588,6 +592,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Strong_Services/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -600,8 +605,13 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = Strong_Services;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -614,6 +624,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Strong_Services/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -626,7 +637,12 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = Strong_Services;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;

@@ -146,26 +146,28 @@ export interface Datapurco {
 }
 
 export interface Datasaleo {
-  saleosid: string;
-  entryid: string;
-  entryemail: string;
-  compid: string;
   accid: string;
-  agentid: string;
-  bookname: string;
-  compname: string;
-  agentname: string;
-  invnochr: string;
-  invdate: string;
   accname: string;
-  cityname: string;
-  mobile: string;
-  billamt: string;
-  prevrecamt: string;
-  returnamt: string;
-  recamt: string;
-  runbalamt: string;
+  agentid: string;
+  agentname: string;
+  areaname: string;
   balamt: string;
-  days: string;
+  billamt: string;
+  bookname: string;
+  cityname: string;
+  compcode?: any;
+  compid: string;
+  compname: string;
   customeremail: string;
+  days: string;
+  entryemail: string;
+  entryid: string;
+  invdate: string;
+  invnochr: string;
+  mobile: string;
+  prevrecamt: string;
+  recamt: string;
+  returnamt: string;
+  runbalamt: string;
+  saleosid: string;
 }

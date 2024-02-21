@@ -1,9 +1,11 @@
 import {getDBConnection} from '@/DB/database';
+import {Datapurco} from '@/Interfaces/ReportInterface';
 import {Functions} from '@Utils';
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 
 interface DBInitInterface {
   PartyWiseOS: SaleOSDataInterfase[];
+  PartyWisePurchOS: Datapurco[];
   MastList: OSInterfase[];
   FilterList: OSInterfase[];
   FilterLedger: AccLedgerInterfase[];
@@ -11,11 +13,17 @@ interface DBInitInterface {
   PartyWiseLedger: LedgerDataInterfase[];
   FilterCity: string[];
   FilterAgent: string[];
+  FilterArea: string[];
   MastAgent: {label: string; value: string}[];
   MastCity: {label: string; value: string}[];
-  LotWiseList: {lotno: string}[];
+  MastArea: {label: string; value: string}[];
+  LotWiseList: {lotno: string; compid: string; accid: string}[];
   ApplyFilter: boolean;
 }
+
+export const GetCompanys = createAsyncThunk('GetCompanys', async () => {
+  const db = await getDBConnection();
+});
 
 export const GetSaleOS = createAsyncThunk(
   'GetSaleOS',
@@ -25,10 +33,12 @@ export const GetSaleOS = createAsyncThunk(
 
       let Role: string;
       const User = await Functions.getUser();
-      if (User?.entryrights == 'Owner') {
+      if (User?.userrights == 'Owner') {
         Role = 'Owner';
-      } else if (User?.acctype == 'SALES') {
-        Role = 'SALES';
+      } else if (User?.userrights == 'Client') {
+        Role = 'Client';
+      } else if (User?.userrights == 'Agent') {
+        Role = 'Agent';
       }
 
       const db = await getDBConnection();
@@ -104,9 +114,9 @@ export const GetSaleOS = createAsyncThunk(
 
       const returnData = SaleData.reduce((acc, curr) => {
         const found: OSInterfase = acc.find((item: OSInterfase) =>
-          Role == 'Owner'
+          Role == 'Owner' || Role == 'Agent'
             ? item.accid === curr.accid
-            : Role == 'SALES'
+            : Role == 'Client'
             ? item.compid === curr.compid
             : null,
         )!;
@@ -119,6 +129,7 @@ export const GetSaleOS = createAsyncThunk(
             cityname: curr.cityname,
             compid: curr.compid,
             compname: curr.compname,
+            mobile: curr.mobile,
             id: curr.saleosid,
             totalbill: curr.billamt,
           });
@@ -331,6 +342,61 @@ export const GetPartyWiseSaleOS = createAsyncThunk(
   },
 );
 
+export const GetPartyWisePurchOS = createAsyncThunk(
+  'GetPartyWisePurchOS',
+  async ({accid, compid}: {accid: string; compid: string}, thunkAPI) => {
+    return new Promise<Datapurco[]>(async (resolve, reject) => {
+      const State: any = thunkAPI.getState();
+
+      let Role: string;
+      const User = await Functions.getUser();
+      if (User?.entryrights == 'Owner') {
+        Role = 'Owner';
+      } else if (User?.acctype == 'SALES') {
+        Role = 'SALES';
+      }
+
+      const db = await getDBConnection();
+      let query = `SELECT * FROM purcosmst WHERE `;
+
+      if (Role! == 'Owner') {
+        query += `accid=${accid}`;
+      } else {
+        query += `compid=${compid}`;
+      }
+
+      if (
+        State?.DBReducer?.FilterCity &&
+        State?.DBReducer?.FilterCity?.length > 0
+      ) {
+        query += ` AND cityname IN (${State?.DBReducer?.FilterCity?.map(
+          (city: string) => `'${city}'`,
+        ).join(',')})`;
+      }
+
+      // console.log('State?.DBReducer?.MastAgent', State?.DBReducer?.MastAgent);
+      if (
+        State?.DBReducer?.FilterAgent &&
+        State?.DBReducer?.FilterAgent?.length > 0
+      ) {
+        query += ` AND agentname IN (${State?.DBReducer?.FilterAgent?.map(
+          (agent: string) => `'${agent}'`,
+        ).join(',')})`;
+      }
+
+      query += ` ORDER BY invdate DESC`;
+
+      console.log('query', query);
+
+      const PurchDataSql = await db.executeSql(query);
+
+      const PurchData = PurchDataSql[0].rows.raw();
+
+      resolve(PurchData);
+    });
+  },
+);
+
 export const GetPartyWiseLedger = createAsyncThunk(
   'GetPartyWiseLedger',
   async ({accid, compid}: {accid: string; compid: string}) => {
@@ -357,58 +423,109 @@ export const GetPartyWiseLedger = createAsyncThunk(
   },
 );
 
-export const GetLotWise = createAsyncThunk('GetLotWise', (_, thunkAPI) => {
-  return new Promise<{lotno: string}[]>(async (resolve, reject) => {
-    // SELECT lotno FROM coldmst GROUP BY lotno
+export const GetLotWiseColdList = createAsyncThunk(
+  'GetLotWiseColdList',
+  (_, thunkAPI) => {
+    return new Promise<{lotno: string; compid: string; accid: string}[]>(
+      async (resolve, reject) => {
+        const State: any = thunkAPI.getState();
 
-    const State: any = thunkAPI.getState();
+        let Role: string;
+        const User = await Functions.getUser();
+        if (User?.entryrights == 'Owner') {
+          Role = 'Owner';
+        } else if (User?.acctype == 'SALES') {
+          Role = 'SALES';
+        }
 
-    let Role: string;
-    const User = await Functions.getUser();
-    if (User?.entryrights == 'Owner') {
-      Role = 'Owner';
-    } else if (User?.acctype == 'SALES') {
-      Role = 'SALES';
-    }
+        const db = await getDBConnection();
 
-    const db = await getDBConnection();
+        let query = `SELECT compid, accid, lotno FROM coldmst GROUP BY lotno ORDER BY lotno`;
 
-    let query = `SELECT lotno FROM coldmst GROUP BY lotno`;
+        const LotDataSql = await db.executeSql(query);
 
-    const LotDataSql = await db.executeSql(query);
+        const LotData = LotDataSql[0].rows.raw();
+        resolve(LotData);
+      },
+    );
+  },
+);
 
-    const LotData = LotDataSql[0].rows.raw();
-    resolve(LotData);
-  });
-});
+export const GetAccWiseColdList = createAsyncThunk(
+  'GetAccWise',
+  (_, thunkAPI) => {
+    return new Promise<{lotno: string}[]>(async (resolve, reject) => {
+      // SELECT lotno FROM coldmst GROUP BY lotno
+
+      const State: any = thunkAPI.getState();
+
+      let Role: string;
+      const User = await Functions.getUser();
+      if (User?.entryrights == 'Owner') {
+        Role = 'Owner';
+      } else if (User?.acctype == 'SALES') {
+        Role = 'SALES';
+      }
+
+      const db = await getDBConnection();
+
+      let query = `SELECT compid, accid, lotno FROM coldmst`;
+
+      if (Role! == 'Owner') {
+        query += ` GROUP BY accname ORDER BY accname`;
+      } else if (Role! == 'SALES') {
+        query += ` GROUP BY compname ORDER BY compname`;
+      }
+
+      const LotDataSql = await db.executeSql(query);
+
+      const LotData = LotDataSql[0].rows.raw();
+      resolve(LotData);
+    });
+  },
+);
 
 interface FilterData {
   MastCity: {label: string; value: string}[];
   MastAgent: {label: string; value: string}[];
+  MastArea: {label: string; value: string}[];
 }
-export const GetFilterData = createAsyncThunk('GetFilterData', () => {
-  return new Promise<FilterData>(async (resolve, reject) => {
-    const db = await getDBConnection();
-    let Cityquery = `SELECT cityname FROM saleosmst GROUP BY cityname ORDER BY cityname`;
-    const CityDataSql = await db.executeSql(Cityquery);
-    const CityData = CityDataSql[0].rows.raw();
+export const GetFilterData = createAsyncThunk(
+  'GetFilterData',
+  ({type}: {type: 'sale' | 'purchase'}) => {
+    return new Promise<FilterData>(async (resolve, reject) => {
+      const dbName = type == 'sale' ? 'saleosmst' : 'purcosmst';
+      const db = await getDBConnection();
+      let Cityquery = `SELECT cityname FROM ${dbName} GROUP BY cityname ORDER BY cityname`;
+      const CityDataSql = await db.executeSql(Cityquery);
+      const CityData = CityDataSql[0].rows.raw();
 
-    let Agentquery = `SELECT agentname FROM saleosmst GROUP BY agentname ORDER BY agentname`;
-    const AgentDataSql = await db.executeSql(Agentquery);
-    const AgentData = AgentDataSql[0].rows.raw();
+      let Agentquery = `SELECT agentname FROM ${dbName} GROUP BY agentname ORDER BY agentname`;
+      const AgentDataSql = await db.executeSql(Agentquery);
+      const AgentData = AgentDataSql[0].rows.raw();
 
-    const City = CityData.map(city => {
-      return {label: city.cityname, value: city.cityname};
+      // let Areaquery = `SELECT agentname FROM ${dbName} GROUP BY agentname ORDER BY agentname`;
+      let Areaquery = `SELECT areaname FROM ${dbName} where areaname IS NOT NULL GROUP BY areaname ORDER BY areaname`;
+      const AreaDataSql = await db.executeSql(Areaquery);
+      const AreaData = AreaDataSql[0].rows.raw();
+
+      const City = CityData.map(city => {
+        return {label: city.cityname, value: city.cityname};
+      });
+      const Agent = AgentData.map(agent => {
+        return {label: agent.agentname, value: agent.agentname};
+      });
+      const Area = AreaData.map(area => {
+        return {label: area.areaname, value: area.areaname};
+      });
+      resolve({MastAgent: Agent, MastCity: City, MastArea: Area});
     });
-    const Agent = AgentData.map(agent => {
-      return {label: agent.agentname, value: agent.agentname};
-    });
-    resolve({MastAgent: Agent, MastCity: City});
-  });
-});
+  },
+);
 
 const initialState: DBInitInterface = {
   PartyWiseOS: [],
+  PartyWisePurchOS: [],
   PartyWiseLedger: [],
   FilterList: [],
   MastList: [],
@@ -416,7 +533,9 @@ const initialState: DBInitInterface = {
   MastLedger: [],
   MastAgent: [],
   MastCity: [],
+  MastArea: [],
   FilterAgent: [],
+  FilterArea: [],
   FilterCity: [],
   LotWiseList: [],
   ApplyFilter: false,
@@ -434,11 +553,20 @@ const DBReducer = createSlice({
     SetApplyFilter: (state, {payload}) => {
       state.ApplyFilter = payload;
     },
+    SetFilterAgent: (state, {payload}) => {
+      state.FilterAgent = payload;
+    },
     SetFilterCity: (state, {payload}) => {
       state.FilterCity = payload;
     },
+    SetFilterArea: (state, {payload}) => {
+      state.FilterArea = payload;
+    },
     SetPartyWiseOS: (state, {payload}) => {
       state.PartyWiseOS = payload;
+    },
+    SetPartyWisePurchOS: (state, {payload}) => {
+      state.PartyWisePurchOS = payload;
     },
     SetPartyWiseLedger: (state, {payload}) => {
       state.PartyWiseLedger = payload;
@@ -472,17 +600,22 @@ const DBReducer = createSlice({
     builder.addCase(GetPartyWiseSaleOS.fulfilled, (state, {payload}) => {
       state.PartyWiseOS = payload;
     });
+    builder.addCase(GetPartyWisePurchOS.fulfilled, (state, {payload}) => {
+      state.PartyWisePurchOS = payload;
+    });
     builder.addCase(GetPartyWiseLedger.fulfilled, (state, {payload}) => {
       state.PartyWiseLedger = payload;
     });
     builder.addCase(GetFilterData.fulfilled, (state, {payload}) => {
-      const {MastAgent, MastCity} = payload;
+      const {MastAgent, MastCity, MastArea} = payload;
       state.MastAgent = MastAgent;
       state.MastCity = MastCity;
+      state.MastArea = MastArea;
     });
-    builder.addCase(GetLotWise.fulfilled, (state, {payload}) => {
+    builder.addCase(GetLotWiseColdList.fulfilled, (state, {payload}) => {
       state.LotWiseList = payload;
     });
+    builder.addCase(GetAccWiseColdList.fulfilled, (state, {payload}) => {});
   },
 });
 
@@ -493,9 +626,12 @@ export const {
   SetMastList,
   SetPartyWiseLedger,
   SetPartyWiseOS,
+  SetPartyWisePurchOS,
   SetFilterCity,
   SetApplyFilter,
   SetResetFilter,
+  SetFilterAgent,
+  SetFilterArea,
 } = DBReducer.actions;
 
 export default DBReducer.reducer;

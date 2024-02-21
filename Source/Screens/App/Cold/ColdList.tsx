@@ -5,6 +5,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
@@ -14,7 +15,7 @@ import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
 import {RNCText} from 'Common';
 import {ColdListPageProps} from '@/Interfaces/AppStackParamList';
 import {useAppDispatch, useAppSelector} from '@ReduxHook';
-import {GetLotWise} from 'Reducers';
+import {GetLotWiseColdList} from 'Reducers';
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 
 const ColdList = ({navigation, route}: ColdListPageProps) => {
@@ -26,8 +27,24 @@ const ColdList = ({navigation, route}: ColdListPageProps) => {
   const [SearchText, setSearchText] = useState('');
 
   useEffect(() => {
-    dispatch(GetLotWise());
+    dispatch(GetLotWiseColdList());
   }, []);
+
+  const handleSearch = (query: string) => {
+    setSearchText(query);
+    const queryWords = query.toLowerCase().split(' ');
+    // UserType == 'OWNER'
+
+    // const filteredResults = MastLedger.filter(item => {
+    //   const city = item.cityname.toLowerCase();
+    //   const name = item.party.toLowerCase();
+
+    //   return queryWords.every(
+    //     word => name.includes(word) || city.includes(word),
+    //   );
+    // });
+    // dispatch(SetFilterLedger(filteredResults));
+  };
 
   return (
     <View style={{flex: 1}}>
@@ -50,20 +67,40 @@ const ColdList = ({navigation, route}: ColdListPageProps) => {
             left: normalize(15),
           }}>
           {SearchEnable ? (
-            <View style={{width: '70%', padding: normalize(5)}}>
-              {/* <TextInput
+            <View
+              style={{
+                width: '70%',
+                padding: normalize(5),
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+              }}>
+              <TextInput
                 style={{
                   color: Colors.WText,
                   fontFamily: FontFamily.Medium,
                   fontSize: FontSize.font18,
                   borderBottomColor: Colors.White,
                   borderBottomWidth: StyleSheet.hairlineWidth,
-                  borderRadius: 8,
+                  flex: 1,
+                  padding: normalize(3),
                 }}
-                onChangeText={text => setSearchText(text)}
+                value={SearchText}
+                onChangeText={handleSearch}
                 placeholder="Search"
                 placeholderTextColor={Colors.White}
-              /> */}
+                autoFocus
+              />
+              <Pressable
+                onPress={() => handleSearch('')}
+                style={{display: SearchText ? 'flex' : 'none'}}>
+                <FontAwesome6Icon
+                  name="xmark"
+                  color={Colors.WText}
+                  size={normalize(20)}
+                />
+              </Pressable>
             </View>
           ) : (
             <>
@@ -94,8 +131,7 @@ const ColdList = ({navigation, route}: ColdListPageProps) => {
         <View style={{padding: normalize(8), flexDirection: 'row', gap: 8}}>
           <Pressable
             style={{padding: normalize(10)}}
-            // onPress={() => setSearchEnable(!SearchEnable)}
-          >
+            onPress={() => setSearchEnable(!SearchEnable)}>
             <FontAwesome5Icon
               name="search"
               size={normalize(20)}

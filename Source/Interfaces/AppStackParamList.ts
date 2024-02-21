@@ -4,9 +4,14 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 export type AppStackParamList = {
   Home: undefined;
   OSListScreen: {type: 'sale' | 'purchase'};
-  OSListFilter: undefined;
+  OSListFilter: {type: 'sale' | 'purchase'};
   LedgerScreen: undefined;
-  OSData: {accid: string; compid: string; partyName: string};
+  OSData: {
+    accid: string;
+    compid: string;
+    partyName: string;
+    type: 'sale' | 'purchase';
+  };
   LedgerDetailScreen: {accid: string; compid: string; partyName: string};
   ColdList: {type: 'lot' | 'account' | 'summary'};
 };

@@ -93,16 +93,18 @@ const LedgerDetailScreen = ({
         }}>
         <View
           style={{
-            backgroundColor: Colors.White + 50,
+            backgroundColor: Colors.backgroundSecondary + 80,
             padding: normalize(5),
             borderRadius: 8,
           }}>
-          <RNCText family={FontFamily.SemiBold}>{partyName}</RNCText>
+          <RNCText family={FontFamily.Bold} size={FontSize.font12}>
+            {partyName}
+          </RNCText>
         </View>
 
         <View
           style={{
-            backgroundColor: Colors.White + 50,
+            backgroundColor: Colors.backgroundSecondary + 80,
             padding: normalize(5),
             borderRadius: 8,
           }}>
@@ -137,7 +139,9 @@ const LedgerDetailScreen = ({
           </View>
           <View style={{flexDirection: 'row'}}>
             <View style={{width: '40%'}}>
-              <RNCText>Opening Balance</RNCText>
+              <RNCText size={FontSize.font12} family={FontFamily.SemiBold}>
+                Opening Balance
+              </RNCText>
             </View>
             <View
               style={{
@@ -169,7 +173,7 @@ const LedgerDetailScreen = ({
             return (
               <View
                 style={{
-                  backgroundColor: Colors.White + '80',
+                  backgroundColor: Colors.backgroundSecondary,
                   paddingVertical: normalize(6),
                   paddingHorizontal: normalize(8),
                   borderRadius: 8,
@@ -245,21 +249,21 @@ const LedgerDetailScreen = ({
           }}>
           <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
             <RNCText family={FontFamily.SemiBold} size={FontSize.font11}>
-              Credit Total :{'  '}
-              <RNCText
-                family={FontFamily.Bold}
-                size={FontSize.font12}
-                color={Colors.EAGreen}>
-                {format(CreditTotal)}
-              </RNCText>
-            </RNCText>
-            <RNCText family={FontFamily.SemiBold} size={FontSize.font11}>
               Debit Total :{'  '}
               <RNCText
                 family={FontFamily.Bold}
                 size={FontSize.font12}
                 color={Colors.E855555}>
                 {format(DebitTotal)}
+              </RNCText>
+            </RNCText>
+            <RNCText family={FontFamily.SemiBold} size={FontSize.font11}>
+              Credit Total :{'  '}
+              <RNCText
+                family={FontFamily.Bold}
+                size={FontSize.font12}
+                color={Colors.EAGreen}>
+                {format(CreditTotal)}
               </RNCText>
             </RNCText>
           </View>

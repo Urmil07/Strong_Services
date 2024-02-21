@@ -11,35 +11,36 @@ import {useAppDispatch, useAppSelector} from '@ReduxHook';
 import {
   GetFilterData,
   SetApplyFilter,
+  SetFilterAgent,
+  SetFilterArea,
   SetFilterCity,
   SetResetFilter,
 } from 'Reducers';
 
-const OSListFilter = ({navigation}: OSListFilterPageProps) => {
+const OSListFilter = ({navigation, route}: OSListFilterPageProps) => {
+  const {type} = route.params;
   const dispatch = useAppDispatch();
-  const {MastAgent, MastCity, FilterCity} = useAppSelector(
-    ({DBReducer}) => DBReducer,
-  );
+  const {MastAgent, MastCity, MastArea, FilterCity, FilterAgent, FilterArea} =
+    useAppSelector(({DBReducer}) => DBReducer);
 
   const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => {
-    dispatch(GetFilterData());
+    dispatch(GetFilterData({type}));
   }, []);
 
   return (
     <View style={{flex: 1}}>
-      <SafeAreaView style={{backgroundColor: Colors.card}} />
-      <StatusBar backgroundColor={Colors.card} />
+      <StatusBar backgroundColor={Colors.header} />
+      <SafeAreaView style={{backgroundColor: Colors.header}} />
 
       <View
         style={{
           flexDirection: 'row',
-          justifyContent: 'space-between',
+          // justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: Colors.card,
+          backgroundColor: Colors.header,
           paddingVertical: isAndroid ? normalize(17) : normalize(8),
-          // paddingVertical: normalize(8),
         }}>
         <View
           style={{
@@ -68,13 +69,13 @@ const OSListFilter = ({navigation}: OSListFilterPageProps) => {
             Filter
           </RNCText>
         </View>
-        <View />
       </View>
 
       <View
         style={{
           flex: 1,
           padding: normalize(10),
+          gap: 15,
         }}>
         <View style={{gap: 5}}>
           <RNCText family={FontFamily.Bold} style={{left: normalize(10)}}>
@@ -96,6 +97,62 @@ const OSListFilter = ({navigation}: OSListFilterPageProps) => {
             value={FilterCity}
             onChange={item => {
               dispatch(SetFilterCity(item));
+            }}
+            selectedStyle={styles.selectedStyle}
+            activeColor={Colors.LightBlue}
+            itemTextStyle={styles.itemTextStyle}
+            fontFamily={FontFamily.Regular}
+          />
+        </View>
+
+        <View style={{gap: 5}}>
+          <RNCText family={FontFamily.Bold} style={{left: normalize(10)}}>
+            Agent
+          </RNCText>
+          <MultiSelect
+            style={styles.dropdown}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            inputSearchStyle={styles.inputSearchStyle}
+            iconStyle={styles.iconStyle}
+            containerStyle={styles.containerStyle}
+            search
+            data={MastAgent}
+            labelField="label"
+            valueField="value"
+            placeholder="Select City..."
+            searchPlaceholder="Search..."
+            value={FilterAgent}
+            onChange={item => {
+              dispatch(SetFilterAgent(item));
+            }}
+            selectedStyle={styles.selectedStyle}
+            activeColor={Colors.LightBlue}
+            itemTextStyle={styles.itemTextStyle}
+            fontFamily={FontFamily.Regular}
+          />
+        </View>
+
+        <View style={{gap: 5}}>
+          <RNCText family={FontFamily.Bold} style={{left: normalize(10)}}>
+            Area
+          </RNCText>
+          <MultiSelect
+            style={styles.dropdown}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            inputSearchStyle={styles.inputSearchStyle}
+            iconStyle={styles.iconStyle}
+            containerStyle={styles.containerStyle}
+            search
+            data={MastArea}
+            labelField="label"
+            valueField="value"
+            placeholder="Select City..."
+            searchPlaceholder="Search..."
+            value={FilterArea}
+            onChange={item => {
+              dispatch(SetFilterArea(item));
             }}
             selectedStyle={styles.selectedStyle}
             activeColor={Colors.LightBlue}

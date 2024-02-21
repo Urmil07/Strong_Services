@@ -1,0 +1,49 @@
+1) Log Out : After logout redirect to Login Page, Save Password 
+2) App Download thata Name and MobileNo aapvu : Data save karav va
+
+*Done
+3) Sale OS and Purc OS nu Name change karvu :
+- Sale Oustanding = Payable (SaleOS)
+- Purchase Outstanding = Recivable (PurcOS)
+
+
+4)Date Filter to all Report : Common and  Individual Report
+- Start Date and End Date
+- Company Selection Combo pan add karva nu che (I will explain you)
+5) SaleOs,Purcos and Ledger : Add Filter Option  
+	-> Company Selection (Discussion)
+	-> Date
+	-> City
+	-> Area 
+	-> BookName
+	-> AgentName
+	-> Days : Sale and Purc ma j aavse (Greater then or Less then)
+
+5) Sale,Purc OS and Ledger ma Click karya pachi Date Filter aapvu : Miracal ma aapyu che tay mujab
+7) Ledger Click karta Party nu list Acednigng Ord ma Aapvu Joyye. Same as Party per click karta Date acending Ord ma aapvu (Leder ma Monthname and Subscedule wise search ma aapvu)
+8) Ledger ma Order by Date Acending and Descending karvu
+9) Ledger ma Data Sequance : 
+	- Date,AccName,Debit,Credit, Bal, DrCr 
+	- And Footer ma pan sequance Debit Total and Credit Total (change sequance)
+10) Ledger ma Date and B.No. ni middle ma AccName add karvu.
+
+
+I will explain you :
+1)User Company Registration nu Aapvu : Second Time
+
+*Done
+2)Designing Change Karvu. (Sathe mali ne Karisu) 
+Saleos, PurcOs etc Icon mukva
+
+3) Ledger Summary and Leder Detail (Already che)
+12 line no j Report karvu
+Paty Group by
+Column : MonthName, DrAmt, CrAmt, BalAmt, CrDr
+
+4) Note : Agent mate report display option mukvu 
+(Agent ne only SaleOs show thavu joyye and Leder pan Sundary Debtors na j data display karva)
+
+# REFF
+5) Company wise Seacrh thavu jo ye
+BAHURANI COLLECTION
+Company Select Karvi

@@ -5,6 +5,7 @@ interface OSInterfase {
   accname: string;
   compid: string;
   compname: string;
+  mobile: string;
   id: string;
   // data: SaleOSDataInterfase[];
 }
@@ -21,7 +22,6 @@ interface AccLedgerInterfase {
 }
 
 interface SaleOSDataInterfase {
-  // CustomerEmail: string;
   accid: string;
   accname?: any;
   agentid: string;
@@ -41,7 +41,6 @@ interface SaleOSDataInterfase {
   mobile: string;
   prevrecamt: string;
   saleosid: string;
-  // purcosid: string;
   recamt: string;
   returnamt: string;
   runbalamt: string;

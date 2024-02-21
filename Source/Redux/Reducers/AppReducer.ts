@@ -4,19 +4,27 @@ import {Estronglogin} from './LoginReducer';
 import {DeleteTable, db, getDBConnection} from '@/DB/database';
 import {EstrongReportInterface} from '@/Interfaces/ReportInterface';
 import {
+  GetAccWiseColdList,
   GetFilterData,
   GetLedger,
-  GetLotWise,
+  GetLotWiseColdList,
   GetPartyWiseLedger,
+  GetPartyWisePurchOS,
   GetPartyWiseSaleOS,
   GetPurchaseOS,
   GetSaleOS,
 } from './DBReducer';
 import {SQLiteDatabase} from 'react-native-sqlite-storage';
 
-const initialState = {
+interface State {
+  Loading: boolean;
+  ToggleToast: boolean;
+  UserRights: 'Owner' | 'Client' | 'Agent' | '';
+}
+const initialState: State = {
   Loading: false,
   ToggleToast: true,
+  UserRights: '',
 };
 
 export const EstrongReport = createAsyncThunk(
@@ -205,6 +213,7 @@ export const EstrongReport = createAsyncThunk(
       // };
 
       const db = await getDBConnection();
+      console.log('response', response.status);
       await AddFetchData(response, db);
 
       return response;
@@ -220,8 +229,8 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
     if (response.status === 200) {
       if (response.data_saleos.length > 0) {
         await DeleteTable('saleosmst');
-
         await db.transaction(tx => {
+          console.log('response.data_saleos', response.data_saleos[0]);
           const Rdata_saleos = response.data_saleos.map(data => {
             return new Promise<number>(async (resolve, reject) => {
               const {
@@ -229,10 +238,12 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                 accname,
                 agentid,
                 agentname,
+                areaname,
                 balamt,
                 billamt,
                 bookname,
                 cityname,
+                compcode,
                 compid,
                 compname,
                 customeremail,
@@ -250,16 +261,18 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
               } = data;
 
               tx.executeSql(
-                `INSERT INTO saleosmst (accid,accname,agentid,agentname,balamt,billamt,bookname,cityname,compid,compname,customeremail,days,entryemail,entryid,invdate,invnochr,mobile,prevrecamt,recamt,returnamt,runbalamt,saleosid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                `INSERT INTO saleosmst (accid,accname,agentid,agentname,areaname,balamt,billamt,bookname,cityname,compcode,compid,compname,customeremail,days,entryemail,entryid,invdate,invnochr,mobile,prevrecamt,recamt,returnamt,runbalamt,saleosid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 [
                   accid,
                   accname,
                   agentid,
                   agentname,
+                  areaname,
                   balamt,
                   billamt,
                   bookname,
                   cityname,
+                  compcode,
                   compid,
                   compname,
                   customeremail,
@@ -281,6 +294,11 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                   } else {
                     reject(new Error(`Failed to insert: ${saleosid}`));
                   }
+                },
+                error => {
+                  console.error(
+                    `Error inserting ${saleosid} into the database: ${error} `,
+                  );
                 },
               );
             });
@@ -328,7 +346,6 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                 returnamt,
                 runbalamt,
               } = data;
-              console.log('data', data);
               tx.executeSql(
                 `INSERT INTO purcosmst (CustomerEmail,accid,accname,agentid,agentname,balamt,billamt,bookname,cityname,compid,compname,days,entryemail,entryid,invdate,invnochr,mobile,prevrecamt,purcosid,recamt,returnamt,runbalamt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 [
@@ -356,10 +373,6 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                   runbalamt,
                 ],
                 (tx, results) => {
-                  console.log(
-                    'purcosmst results.rowsAffected',
-                    results.rowsAffected,
-                  );
                   if (results.rowsAffected > 0) {
                     resolve(results.insertId);
                   } else {
@@ -705,6 +718,9 @@ const AppReducer = createSlice({
   name: 'AppReducer',
   initialState,
   reducers: {
+    SetUserRights: (state, {payload}) => {
+      state.UserRights = payload;
+    },
     SetLoading: (state, {payload}) => {
       state.Loading = payload;
     },
@@ -785,18 +801,36 @@ const AppReducer = createSlice({
     builder.addCase(GetFilterData.fulfilled, state => {
       state.Loading = false;
     });
-    builder.addCase(GetLotWise.pending, state => {
+    builder.addCase(GetLotWiseColdList.pending, state => {
       state.Loading = true;
     });
-    builder.addCase(GetLotWise.rejected, state => {
+    builder.addCase(GetLotWiseColdList.rejected, state => {
       state.Loading = false;
     });
-    builder.addCase(GetLotWise.fulfilled, state => {
+    builder.addCase(GetLotWiseColdList.fulfilled, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetAccWiseColdList.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetAccWiseColdList.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetAccWiseColdList.fulfilled, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetPartyWisePurchOS.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetPartyWisePurchOS.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetPartyWisePurchOS.fulfilled, state => {
       state.Loading = false;
     });
   },
 });
 
-export const {SetLoading, SetToggleToast} = AppReducer.actions;
+export const {SetLoading, SetToggleToast, SetUserRights} = AppReducer.actions;
 
 export default AppReducer.reducer;

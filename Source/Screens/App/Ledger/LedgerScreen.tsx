@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '@ReduxHook';
-import {GetLedger, SetPartyWiseLedger} from 'Reducers';
+import {GetLedger, SetFilterLedger, SetPartyWiseLedger} from 'Reducers';
 import {Colors, FontFamily, FontSize, isAndroid} from '@Constants';
 import normalize from 'react-native-normalize';
 import {LedgerScreenPageProps} from '@/Interfaces/AppStackParamList';
@@ -21,9 +21,11 @@ import {useIsFocused} from '@react-navigation/native';
 
 const LedgerScreen = ({navigation}: LedgerScreenPageProps) => {
   const dispatch = useAppDispatch();
-  const {FilterLedger} = useAppSelector(({DBReducer}) => DBReducer);
+  const {FilterLedger, MastLedger} = useAppSelector(({DBReducer}) => DBReducer);
   const focused = useIsFocused();
   const [UserType, setUserType] = useState('');
+  const [SearchEnable, setSearchEnable] = useState(false);
+  const [SearchText, setSearchText] = useState('');
 
   useEffect(() => {
     if (focused) dispatch(SetPartyWiseLedger([]));
@@ -48,8 +50,21 @@ const LedgerScreen = ({navigation}: LedgerScreenPageProps) => {
     currency: 'INR',
   });
 
-  const [SearchEnable, setSearchEnable] = useState(false);
-  const [SearchText, setSearchText] = useState('');
+  const handleSearch = (query: string) => {
+    setSearchText(query);
+    const queryWords = query.toLowerCase().split(' ');
+    // UserType == 'OWNER'
+
+    const filteredResults = MastLedger.filter(item => {
+      const city = item.cityname.toLowerCase();
+      const name = item.party.toLowerCase();
+
+      return queryWords.every(
+        word => name.includes(word) || city.includes(word),
+      );
+    });
+    dispatch(SetFilterLedger(filteredResults));
+  };
 
   return (
     <View style={{flex: 1}}>
@@ -72,7 +87,15 @@ const LedgerScreen = ({navigation}: LedgerScreenPageProps) => {
             left: normalize(15),
           }}>
           {SearchEnable ? (
-            <View style={{width: '70%', padding: normalize(5)}}>
+            <View
+              style={{
+                width: '70%',
+                padding: normalize(5),
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+              }}>
               <TextInput
                 style={{
                   color: Colors.WText,
@@ -80,12 +103,24 @@ const LedgerScreen = ({navigation}: LedgerScreenPageProps) => {
                   fontSize: FontSize.font18,
                   borderBottomColor: Colors.White,
                   borderBottomWidth: StyleSheet.hairlineWidth,
-                  borderRadius: 8,
+                  flex: 1,
+                  padding: normalize(3),
                 }}
-                onChangeText={text => setSearchText(text)}
+                value={SearchText}
+                onChangeText={handleSearch}
                 placeholder="Search"
                 placeholderTextColor={Colors.White}
+                autoFocus
               />
+              <Pressable
+                onPress={() => handleSearch('')}
+                style={{display: SearchText ? 'flex' : 'none'}}>
+                <FontAwesome6Icon
+                  name="xmark"
+                  color={Colors.WText}
+                  size={normalize(20)}
+                />
+              </Pressable>
             </View>
           ) : (
             <>
@@ -119,7 +154,8 @@ const LedgerScreen = ({navigation}: LedgerScreenPageProps) => {
           </Pressable>
           <Pressable
             style={{padding: normalize(10)}}
-            onPress={() => navigation.navigate('OSListFilter')}>
+            // onPress={() => navigation.navigate('OSListFilter')}
+          >
             <FontAwesome5
               name="filter"
               size={normalize(20)}
@@ -136,13 +172,12 @@ const LedgerScreen = ({navigation}: LedgerScreenPageProps) => {
         }}>
         <FlatList
           data={FilterLedger}
-          // keyExtractor={(item, index) => index.toString()}
           showsVerticalScrollIndicator={false}
           renderItem={({item, index}) => {
             return (
               <Pressable
                 style={{
-                  backgroundColor: Colors.White + '80',
+                  backgroundColor: Colors.backgroundSecondary,
                   paddingVertical: normalize(6),
                   paddingHorizontal: normalize(8),
                   borderRadius: 6,

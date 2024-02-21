@@ -23,12 +23,12 @@ const RNCLoader = (props: LoaderProps) => {
           <ActivityIndicator
             size={size}
             animating={true}
-            color={Colors.backgroundSecondary}
+            color={Colors.WText}
           />
           <RNCText
             family={FontFamily.SemiBold}
             size={FontSize.font15}
-            color={Colors.backgroundSecondary}
+            color={Colors.WText}
             style={LoaderFontStyle}>
             Loading...
           </RNCText>

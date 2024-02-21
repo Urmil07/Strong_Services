@@ -1,19 +1,18 @@
-import {SafeAreaView, Text, View} from 'react-native';
 import React, {useEffect} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
-// import {NavigationRoutes} from '@/Constants';
 import AppStack from './AppStack';
 import AuthStack from './AuthStack';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {Colors, FontFamily, FontSize, NavigationRoutes} from '@/Constants';
 import {useAppDispatch, useAppSelector} from '@ReduxHook';
-import {RNCLoader, RNCToast} from 'Common';
+import {RNCLoader} from 'Common';
 import {createTable, getDBConnection} from '@/DB/database';
 import {Functions} from '@Utils';
 import {SetIsAuth} from 'Reducers';
-import {ToastProvider, useToast} from 'react-native-toast-notifications';
-import SampleScreen from '../../SampleScreen';
+import {ToastProvider} from 'react-native-toast-notifications';
+// import SampleScreen from '../../SampleScreen';
+import BootSplash from 'react-native-bootsplash';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,7 +23,10 @@ const Routes = () => {
 
   useEffect(() => {
     // createTable();
-    InitData();
+    InitData().finally(async () => {
+      await BootSplash.hide({fade: true});
+      console.log('BootSplash has been hidden successfully');
+    });
   }, []);
 
   const InitData = async () => {

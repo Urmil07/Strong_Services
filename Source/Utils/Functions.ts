@@ -35,6 +35,17 @@ const getAppData: User = async () => {
   return JSON.parse(value);
 };
 
+const getCurrentFinancialYear = () => {
+  var fiscalyear = '';
+  var today = new Date();
+  if (today.getMonth() + 1 <= 3) {
+    fiscalyear = today.getFullYear() - 1 + '-' + today.getFullYear();
+  } else {
+    fiscalyear = today.getFullYear() + '-' + (today.getFullYear() + 1);
+  }
+  return fiscalyear;
+};
+
 export default {
   ALERT,
   OpenUrl,
@@ -42,4 +53,5 @@ export default {
   getUser,
   setAppData,
   getAppData,
+  getCurrentFinancialYear,
 };

@@ -1,13 +1,27 @@
-import {Pressable, SafeAreaView, StyleSheet, View} from 'react-native';
-import React, {useState} from 'react';
-import {Colors, Images, normalize} from '@Constants';
+import {
+  Pressable,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  View,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  Colors,
+  FontFamily,
+  FontSize,
+  Images,
+  isAndroid,
+  normalize,
+} from '@Constants';
 import {RNCButton, RNCDropdown, RNCText, RNCTextInput} from 'Common';
 import FontAwesome from 'react-native-vector-icons/FontAwesome6';
 import FastImage from 'react-native-fast-image';
 import {useAppDispatch, useAppSelector} from '@ReduxHook';
-import {Estronglogin, SetIsAuth} from 'Reducers';
+import {Estronglogin, SetIsAuth, SetUserRights} from 'Reducers';
 import {useForm} from 'react-hook-form';
 import {FormValues} from '@/Interfaces/Common';
+import {Functions} from '@Utils';
 
 const LoginType = [
   {label: 'OWNER', value: 'OWNER'},
@@ -30,6 +44,10 @@ const Login = () => {
     },
   });
 
+  useEffect(() => {
+    reset();
+  }, [ActiveTab]);
+
   const OnSubmit = (data: any) => {
     // console.log('data', data);
     // Estronglogin({EntryId: 'patelwarehousing27@gmail.com', EntryPwd: '3242'}),
@@ -37,17 +55,37 @@ const Login = () => {
       .unwrap()
       .then(async response => {
         if (response.status === 200) {
+          const User = await Functions.getUser();
+          dispatch(SetUserRights(User?.userrights));
           dispatch(SetIsAuth(false));
         }
       });
   };
 
   return (
-    <SafeAreaView style={{flex: 1}}>
+    <View>
+      <SafeAreaView style={{flex: 1, backgroundColor: Colors.header}} />
+      <StatusBar backgroundColor={Colors.header} />
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: Colors.header,
+          paddingVertical: normalize(15),
+        }}>
+        <RNCText
+          family={FontFamily.Bold}
+          size={FontSize.font18}
+          color={Colors.WText}>
+          Multi Business Accounting Software
+        </RNCText>
+      </View>
+
       <View style={{padding: normalize(10)}}>
         <View
           style={{
-            height: normalize(200),
+            height: normalize(150),
             justifyContent: 'center',
           }}>
           <FastImage
@@ -127,6 +165,7 @@ const Login = () => {
                 </View>
               }
               autoCorrect={false}
+              autoCapitalize="none"
             />
             <RNCTextInput
               control={control}
@@ -156,6 +195,8 @@ const Login = () => {
                   />
                 </Pressable>
               }
+              autoCapitalize="none"
+              onSubmitEditing={handleSubmit(OnSubmit)}
             />
 
             {/* <Pressable
@@ -180,6 +221,7 @@ const Login = () => {
             <RNCTextInput
               onChangeText={() => null}
               control={control}
+              autoFocus
               title="EntryId"
               name="EntryId"
               placeholder="Enter Entry ID"
@@ -211,6 +253,7 @@ const Login = () => {
                 </View>
               }
               secureTextEntry={false}
+              autoCapitalize="none"
             />
             <RNCTextInput
               onChangeText={() => null}
@@ -240,6 +283,8 @@ const Login = () => {
                   />
                 </Pressable>
               }
+              autoCapitalize="none"
+              onSubmitEditing={handleSubmit(OnSubmit)}
             />
 
             {/* <Pressable
@@ -267,7 +312,7 @@ const Login = () => {
           onPress={handleSubmit(OnSubmit)}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

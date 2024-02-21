@@ -203,6 +203,8 @@ const TableData = () => {
                     invdate TEXT,
                     accname TEXT,
                     cityname TEXT,
+                    areaname TEXT,
+                    compcode TEXT,
                     mobile TEXT,
                     billamt INTEGER,
                     prevrecamt INTEGER,
@@ -260,8 +262,10 @@ export const createTable = async (db: SQLiteDatabase) => {
 };
 
 export async function DeleteTable(tableName: string) {
-  const DB = await db;
-  DB.transaction(tx => {
+  // const DB = await db;
+  const db = await getDBConnection();
+  console.log('tableName', tableName);
+  db.transaction(tx => {
     tx.executeSql(
       `DELETE FROM ${tableName} `,
       [],

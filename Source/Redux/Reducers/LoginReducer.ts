@@ -56,7 +56,9 @@ export const Estronglogin = createAsyncThunk(
 );
 
 const SetUser = async (response: any) => {
-  return new Promise<void>(async (resolve, reject) => {
+  return new Promise<string>(async (resolve, reject) => {
+    let UserRights: string;
+
     if (response.data[0]?.entryrights == 'Owner') {
       const {
         compdbname,
@@ -72,11 +74,14 @@ const SetUser = async (response: any) => {
         entryrights: string;
       } = response.data[0]!;
 
+      UserRights = entryrights;
+
       await Functions.setUser({
-        compdbname: compdbname,
+        entryName: entryName,
         entryemail: entryemail,
-        entrypwd: entrypwd,
-        entryrights: entryrights,
+        compdbname: compdbname,
+        userpwd: entrypwd,
+        userrights: entryrights,
       });
     }
 
@@ -99,17 +104,19 @@ const SetUser = async (response: any) => {
         acctype: string;
       } = response.data[0]!;
 
+      UserRights = accrights;
+
       await Functions.setUser({
         entryName: entryName,
         entryemail: entryemail,
         accid: accid,
-        accpwd: accpwd,
+        userpwd: accpwd,
         compdbname: compdbname,
-        accrights: accrights,
+        userrights: accrights,
         acctype: acctype,
       });
     }
-    resolve();
+    resolve(UserRights!);
   });
 };
 
