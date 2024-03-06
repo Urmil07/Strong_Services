@@ -1,3 +1,5 @@
+import {Colors, FontFamily, FontSize, isAndroid} from '@Constants';
+import {Datapurco, Datasaleo} from '@/Interfaces/ReportInterface';
 import {
   FlatList,
   Pressable,
@@ -6,40 +8,45 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import {GetSaleOS, SetLoading, SetPartyWiseOS} from 'Reducers';
+import {RNCNodata, RNCText} from 'Common';
+import React, {useCallback, useEffect} from 'react';
 import {useAppDispatch, useAppSelector} from '@ReduxHook';
-import {
-  GetPartyWisePurchOS,
-  GetPartyWiseSaleOS,
-  SetPartyWiseOS,
-  SetPartyWisePurchOS,
-} from 'Reducers';
-import {OSDataPageProps} from '@/Interfaces/AppStackParamList';
-import {Colors, FontFamily, FontSize, isAndroid} from '@Constants';
-import normalize from 'react-native-normalize';
+
 import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
-import {RNCText} from 'Common';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {OSDataPageProps} from '@/Interfaces/AppStackParamList';
+import {OSView} from 'CApp';
+import Zocial from 'react-native-vector-icons/Zocial';
 import moment from 'moment';
+import normalize from 'react-native-normalize';
 
 const OSData = ({navigation, route}: OSDataPageProps) => {
-  const {accid, compid, partyName, type} = route.params;
+  const {accid, compid, partyName, type, city, area, mobile} = route.params;
   const dispatch = useAppDispatch();
-  const {PartyWiseOS, PartyWisePurchOS} = useAppSelector(
-    ({DBReducer}) => DBReducer,
-  );
+  const {PartyWiseOS, PartyTotal} = useAppSelector(({DBReducer}) => DBReducer);
   useEffect(() => {
     navigation.addListener('blur', () => {
       dispatch(SetPartyWiseOS([]));
-      dispatch(SetPartyWisePurchOS([]));
     });
   }, [navigation]);
 
   useEffect(() => {
-    if (type == 'sale') {
-      dispatch(GetPartyWiseSaleOS(route.params));
-    } else {
-      dispatch(GetPartyWisePurchOS(route.params));
-    }
+    FetchData();
+  }, []);
+
+  const FetchData = useCallback(() => {
+    dispatch(GetSaleOS({type, Orderby: 'date', id: accid}))
+      .unwrap()
+      .then(() => {
+        return new Promise<void>((resolve, reject) => {
+          setTimeout(() => {
+            dispatch(SetLoading(false));
+            resolve();
+          }, 800);
+        });
+      });
   }, []);
 
   const {format} = new Intl.NumberFormat('hi-IN', {
@@ -49,16 +56,15 @@ const OSData = ({navigation, route}: OSDataPageProps) => {
 
   return (
     <View style={{flex: 1}}>
-      <SafeAreaView style={{backgroundColor: Colors.card}} />
-      <StatusBar backgroundColor={Colors.card} />
+      <SafeAreaView style={{backgroundColor: Colors.header}} />
+      <StatusBar backgroundColor={Colors.header} />
 
       <View
         style={{
           flexDirection: 'row',
-          justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: Colors.card,
-          paddingVertical: isAndroid ? normalize(10) : 0,
+          backgroundColor: Colors.header,
+          paddingVertical: isAndroid ? normalize(17) : normalize(8),
         }}>
         <View
           style={{
@@ -83,7 +89,6 @@ const OSData = ({navigation, route}: OSDataPageProps) => {
             Out Standing
           </RNCText>
         </View>
-        <View />
       </View>
 
       <View style={{flex: 1, padding: normalize(10), gap: 7}}>
@@ -91,18 +96,71 @@ const OSData = ({navigation, route}: OSDataPageProps) => {
           style={{
             backgroundColor: Colors.backgroundSecondary + 80,
             padding: normalize(5),
-            borderRadius: 8,
+            borderRadius: 4,
+            gap: 5,
           }}>
-          <RNCText family={FontFamily.Bold} size={FontSize.font12}>
-            {partyName}
-          </RNCText>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+            <Ionicons
+              name="business"
+              size={normalize(18)}
+              color={Colors.Black}
+            />
+            <RNCText family={FontFamily.Bold} size={FontSize.font13}>
+              {partyName}
+            </RNCText>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+            }}>
+            <Pressable
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+                alignItems: 'center',
+                flex: 1,
+              }}>
+              <Zocial name="call" size={normalize(18)} color={Colors.Black} />
+              <RNCText size={FontSize.font13}>{mobile}</RNCText>
+            </Pressable>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+                alignItems: 'center',
+                flex: 1,
+              }}>
+              <MaterialCommunityIcons
+                name="home-city"
+                size={normalize(18)}
+                color={Colors.Black}
+              />
+              <RNCText size={FontSize.font13}>{city}</RNCText>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+                alignItems: 'center',
+                flex: 1,
+              }}>
+              <MaterialCommunityIcons
+                name="home-city"
+                size={normalize(18)}
+                color={Colors.Black}
+              />
+              <RNCText size={FontSize.font13}>{area}</RNCText>
+            </View>
+          </View>
         </View>
 
         <View
           style={{
             flexDirection: 'row',
             backgroundColor: Colors.backgroundSecondary + 80,
-            borderRadius: 8,
+            borderRadius: 4,
             padding: normalize(5),
           }}>
           <View
@@ -120,7 +178,7 @@ const OSData = ({navigation, route}: OSDataPageProps) => {
               justifyContent: 'center',
             }}>
             <RNCText size={FontSize.font12} family={FontFamily.Bold}>
-              Bill Amount
+              Bal. Amount
             </RNCText>
           </View>
           <View
@@ -130,174 +188,101 @@ const OSData = ({navigation, route}: OSDataPageProps) => {
               justifyContent: 'center',
             }}>
             <RNCText size={FontSize.font12} family={FontFamily.Bold}>
-              Bal. Amount
+              Run Bal.
             </RNCText>
           </View>
         </View>
 
         {type === 'sale' ? (
           <FlatList
-            data={PartyWiseOS}
+            data={PartyWiseOS as Datasaleo[]}
             showsVerticalScrollIndicator={false}
-            renderItem={({item, index}) => {
-              return (
-                <View
-                  style={{
-                    backgroundColor: Colors.backgroundSecondary,
-                    paddingVertical: normalize(6),
-                    paddingHorizontal: normalize(8),
-                    borderRadius: 8,
-                    justifyContent: 'center',
-                  }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
-                      alignItems: 'center',
-                      gap: 5,
-                    }}>
-                    <RNCText size={FontSize.font11} family={FontFamily.Bold}>
-                      {moment(item.invdate).format('DD/MM/YYYY')}
-                    </RNCText>
-                    <RNCText family={FontFamily.Black} size={FontSize.font18}>
-                      ﹒
-                    </RNCText>
-                    <RNCText size={FontSize.font11} family={FontFamily.Bold}>
-                      {item.bookname}
-                    </RNCText>
-                  </View>
-                  <View style={{flexDirection: 'row'}}>
-                    <View style={{width: '40%'}}>
-                      <RNCText size={FontSize.font11}>
-                        Due Days :{' '}
-                        <RNCText size={FontSize.font11}>{item.days}</RNCText>
-                      </RNCText>
-                    </View>
-                    <View
-                      style={{
-                        width: '30%',
-                        alignItems: 'flex-end',
-                        justifyContent: 'center',
-                      }}>
-                      <RNCText
-                        size={FontSize.font12}
-                        family={FontFamily.SemiBold}>
-                        {format(Number(item.billamt))}
-                      </RNCText>
-                    </View>
-                    <View
-                      style={{
-                        width: '30%',
-                        alignItems: 'flex-end',
-                        justifyContent: 'center',
-                      }}>
-                      <RNCText
-                        size={FontSize.font12}
-                        family={FontFamily.SemiBold}>
-                        {format(Number(item.balamt))}
-                      </RNCText>
-                    </View>
-                  </View>
-                </View>
-              );
-            }}
+            renderItem={({index, item}) => (
+              <OSView
+                index={index}
+                item={item}
+                separators={{
+                  highlight: () => {},
+                  unhighlight: () => {},
+                  updateProps: (
+                    select: 'leading' | 'trailing',
+                    newProps: any,
+                  ) => {},
+                }}
+              />
+            )}
             contentContainerStyle={{gap: 5}}
             style={{marginBottom: 10, flex: 1}}
-            ListEmptyComponent={() => (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <RNCText family={FontFamily.Bold} size={FontSize.font20}>
-                  No Data...
-                </RNCText>
-              </View>
-            )}
+            ListEmptyComponent={RNCNodata}
           />
         ) : (
           <FlatList
-            data={PartyWisePurchOS}
+            data={PartyWiseOS as Datapurco[]}
             showsVerticalScrollIndicator={false}
-            renderItem={({item, index}) => {
-              return (
-                <View
-                  style={{
-                    backgroundColor: Colors.backgroundSecondary,
-                    paddingVertical: normalize(6),
-                    paddingHorizontal: normalize(8),
-                    borderRadius: 8,
-                    justifyContent: 'center',
-                  }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
-                      alignItems: 'center',
-                      gap: 5,
-                    }}>
-                    <RNCText size={FontSize.font11} family={FontFamily.Bold}>
-                      {moment(item.invdate).format('DD/MM/YYYY')}
-                    </RNCText>
-                    <RNCText family={FontFamily.Black} size={FontSize.font18}>
-                      ﹒
-                    </RNCText>
-                    <RNCText size={FontSize.font11} family={FontFamily.Bold}>
-                      {item.bookname}
-                    </RNCText>
-                  </View>
-                  <View style={{flexDirection: 'row'}}>
-                    <View style={{width: '40%'}}>
-                      <RNCText size={FontSize.font11}>
-                        Due Days :{' '}
-                        <RNCText size={FontSize.font11}>{item.days}</RNCText>
-                      </RNCText>
-                    </View>
-                    <View
-                      style={{
-                        width: '30%',
-                        alignItems: 'flex-end',
-                        justifyContent: 'center',
-                      }}>
-                      <RNCText
-                        size={FontSize.font12}
-                        family={FontFamily.SemiBold}>
-                        {format(Number(item.billamt))}
-                      </RNCText>
-                    </View>
-                    <View
-                      style={{
-                        width: '30%',
-                        alignItems: 'flex-end',
-                        justifyContent: 'center',
-                      }}>
-                      <RNCText
-                        size={FontSize.font12}
-                        family={FontFamily.SemiBold}>
-                        {format(Number(item.balamt))}
-                      </RNCText>
-                    </View>
-                  </View>
-                </View>
-              );
-            }}
+            renderItem={({index, item}) => (
+              <OSView
+                index={index}
+                item={item}
+                separators={{
+                  highlight: () => {},
+                  unhighlight: () => {},
+                  updateProps: (
+                    select: 'leading' | 'trailing',
+                    newProps: any,
+                  ) => {},
+                }}
+              />
+            )}
             contentContainerStyle={{gap: 5}}
             style={{marginBottom: 10, flex: 1}}
-            ListEmptyComponent={() => (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <RNCText family={FontFamily.Bold} size={FontSize.font20}>
-                  No Data...
-                </RNCText>
-              </View>
-            )}
+            ListEmptyComponent={RNCNodata}
           />
         )}
+
+        <View
+          style={{
+            backgroundColor: Colors.backgroundSecondary + 80,
+            borderRadius: 4,
+            padding: normalize(5),
+            gap: 5,
+          }}>
+          <View style={styles.totalRows}>
+            <RNCText style={styles.totalTitle}>
+              Bill Amt :{' '}
+              <RNCText style={styles.totalAmt}>
+                {format(PartyTotal.TotalBillAmt)}
+              </RNCText>
+            </RNCText>
+            <RNCText style={styles.totalTitle}>
+              Return Amt :{' '}
+              <RNCText style={styles.totalAmt}>
+                {format(PartyTotal.TotalReturnAmt)}
+              </RNCText>
+            </RNCText>
+          </View>
+          <View style={styles.totalRows}>
+            <RNCText style={styles.totalTitle}>
+              Prevrec Amt :{' '}
+              <RNCText size={FontSize.font12} family={FontFamily.Bold}>
+                {format(PartyTotal.TotalPrevrecAmt)}
+              </RNCText>
+            </RNCText>
+            <RNCText style={[styles.totalTitle]}>
+              Rec Amt :{' '}
+              <RNCText style={styles.totalAmt}>
+                {format(PartyTotal.TotalRecAmt)}
+              </RNCText>
+            </RNCText>
+          </View>
+          <View style={styles.totalRows}>
+            <RNCText style={styles.totalTitle}>
+              Bal Amt :{' '}
+              <RNCText size={FontSize.font12} family={FontFamily.Bold}>
+                {format(PartyTotal.TotalBalAmt)}
+              </RNCText>
+            </RNCText>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -305,4 +290,15 @@ const OSData = ({navigation, route}: OSDataPageProps) => {
 
 export default OSData;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  totalRows: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalTitle: {
+    width: '48%',
+    fontSize: FontSize.font12,
+  },
+  totalAmt: {fontSize: FontSize.font12, fontFamily: FontFamily.Bold},
+});

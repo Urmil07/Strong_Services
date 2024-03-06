@@ -10,5 +10,6 @@ const Images = {
   // Cancel: require(IconPath + 'Cancel' + png),
 
   StrongServices: require(PicPath + 'StrongServices' + png),
+  Nodata: require(PicPath + 'Nodata' + png),
 };
 export default Images;

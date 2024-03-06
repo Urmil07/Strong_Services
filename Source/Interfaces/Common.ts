@@ -1,4 +1,5 @@
 import {FieldInputProps, FieldMetaProps, FormikProps} from 'formik';
+
 import {ViewProps} from 'react-native';
 
 export interface FormValues {
@@ -40,7 +41,6 @@ export interface DropDownPropsOptional<V = any> extends CustomDropDownProps {
 
 export interface ExtraTextProps {
   children?: any;
-  numOfLines?: number;
   size?: number;
   family?: string;
   weight?: any;

@@ -1,124 +1,222 @@
-import {getDBConnection} from '@/DB/database';
-import {Datapurco} from '@/Interfaces/ReportInterface';
-import {Functions} from '@Utils';
+import {Datapurco, Datasaleo} from '@/Interfaces/ReportInterface';
+import {Functions, setDate} from '@Utils';
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
+import dayjs, {Dayjs} from 'dayjs';
+
+import {getDBConnection} from '@/DB/database';
 
 interface DBInitInterface {
-  PartyWiseOS: SaleOSDataInterfase[];
-  PartyWisePurchOS: Datapurco[];
   MastList: OSInterfase[];
   FilterList: OSInterfase[];
-  FilterLedger: AccLedgerInterfase[];
+  PartyWiseOS: Datasaleo[] | Datapurco[];
+  PartyTotal: {
+    TotalBalAmt: number;
+    TotalBillAmt: number;
+    TotalPrevrecAmt: number;
+    TotalRecAmt: number;
+    TotalReturnAmt: number;
+  };
   MastLedger: AccLedgerInterfase[];
+  FilterLedger: AccLedgerInterfase[];
   PartyWiseLedger: LedgerDataInterfase[];
+  FilterBookname: string[];
   FilterCity: string[];
   FilterAgent: string[];
   FilterArea: string[];
+  FilterLedgerComp: string;
+  FilterMonth: string[];
+  FilterSubschedule: string[];
+  MastBookname: {label: string; value: string}[];
   MastAgent: {label: string; value: string}[];
   MastCity: {label: string; value: string}[];
+  MastCompany: {label: string; value: string}[];
+  MasterMonth: {label: string; value: string}[];
+  MasterSubschedule: {label: string; value: string}[];
   MastArea: {label: string; value: string}[];
-  LotWiseList: {lotno: string; compid: string; accid: string}[];
   ApplyFilter: boolean;
+  FilterStartDate: string | undefined;
+  FilterEndDate: string | undefined;
+  FilterCompany: {
+    compid: number;
+    compname: string;
+    totalBillAmt: number;
+    selected: boolean;
+    compyearname: string;
+  }[];
+
+  LotWiseList: {lotno: string; compid: string; accid: string}[];
 }
 
-export const GetCompanys = createAsyncThunk('GetCompanys', async () => {
-  const db = await getDBConnection();
-});
+export const GetCompanys = createAsyncThunk(
+  'GetCompanys',
+  async ({type}: {type: 'sale' | 'purchase'}, thunkAPI) => {
+    const TableName = type === 'sale' ? 'saleosmst' : 'purcosmst';
+    const State: any = thunkAPI.getState();
+    const DBState: DBInitInterface = State?.DBReducer;
+
+    const Date = await setDate();
+    const StartDate = DBState?.FilterStartDate ?? Date.StartDate;
+    const EndDate = DBState?.FilterEndDate ?? Date.EndDate;
+
+    const db = await getDBConnection();
+    // let query = `SELECT compid,compname,SUM(billamt) as totalBillAmt FROM ${TableName} GROUP BY compid ORDER BY compname`;
+    let query = `SELECT ${TableName}.compid,${TableName}.compname,SUM(${TableName}.billamt) as totalBillAmt,compmst.compyearname FROM ${TableName} LEFT JOIN compmst ON compmst.compid=${TableName}.compid GROUP BY ${TableName}.compid ORDER BY compmst.compyearname`;
+    console.log('query', query);
+    const Company = await db.executeSql(query);
+    const CompanyData = Company[0].rows.raw();
+
+    const CompanyArray = CompanyData.map(company => {
+      return {selected: true, ...company};
+    });
+    // console.log('CompanyArray', CompanyArray);
+    return CompanyArray;
+  },
+);
 
 export const GetSaleOS = createAsyncThunk(
   'GetSaleOS',
-  async ({Orderby = 'name'}: {Orderby?: string}, thunkAPI) => {
-    return new Promise<OSInterfase[]>(async (resolve, reject) => {
+  async (
+    {
+      type,
+      Orderby = 'name',
+      id,
+    }: {type: 'sale' | 'purchase'; Orderby?: string; id?: string},
+    thunkAPI,
+  ) => {
+    // return new Promise<OSInterfase[]>(async (resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) => {
       const State: any = thunkAPI.getState();
 
-      let Role: string;
-      const User = await Functions.getUser();
-      if (User?.userrights == 'Owner') {
-        Role = 'Owner';
-      } else if (User?.userrights == 'Client') {
-        Role = 'Client';
-      } else if (User?.userrights == 'Agent') {
-        Role = 'Agent';
-      }
+      const DBState: DBInitInterface = State?.DBReducer;
+      const DBName = type === 'sale' ? 'saleosmst' : 'purcosmst';
+
+      // console.log('State', State?.AppReducer?.UserRights)
+      const Date = await setDate();
+      const StartDate = State?.DBReducer?.FilterStartDate;
+      const EndDate = State?.DBReducer?.FilterEndDate;
+      console.log('StartDate', StartDate);
+      console.log('EndDate', EndDate);
+      // DBState.FilterStartDate
+      // DBState.FilterEndDate
+      const Role: 'Owner' | 'Client' | 'Agent' = State?.AppReducer?.UserRights;
 
       const db = await getDBConnection();
 
-      let query = `SELECT invnochr, accid, accname, compid, compname, cityname, billamt, saleosid FROM saleosmst`;
+      const ExtractData = id
+        ? '*'
+        : 'invdate, invnochr, accid, accname, compid, compname, cityname, billamt, areaname';
+
+      const SelectedComp = DBState?.FilterCompany.map(company => {
+        if (company.selected) {
+          return company.compid;
+        }
+      }).filter(comp => comp !== undefined);
+      let query = `SELECT ${ExtractData} FROM ${DBName} WHERE compid IN(${SelectedComp}) `;
+
+      if (StartDate) {
+        query += ` AND invdate >= '${StartDate}'`;
+      }
+      if (EndDate) {
+        query += ` AND invdate <= '${EndDate}'`;
+      }
 
       if (
         State?.DBReducer?.FilterCity &&
         State?.DBReducer?.FilterCity?.length > 0
       ) {
-        query += ` WHERE cityname IN (${State?.DBReducer?.FilterCity?.map(
+        query += ` AND cityname IN (${State?.DBReducer?.FilterCity?.map(
           (city: string) => `'${city}'`,
         ).join(',')})`;
       }
 
-      // console.log('State?.DBReducer?.MastAgent', State?.DBReducer?.MastAgent);
       if (
         State?.DBReducer?.FilterAgent &&
         State?.DBReducer?.FilterAgent?.length > 0
       ) {
-        if (
-          State?.DBReducer?.FilterCity &&
-          State?.DBReducer?.FilterCity.length > 0
-        ) {
-          query += ' AND ';
-        } else {
-          query += ' WHERE ';
-        }
-        query += `agentname IN (${State?.DBReducer?.FilterAgent?.map(
+        query += ` AND agentname IN (${State?.DBReducer?.FilterAgent?.map(
           (agent: string) => `'${agent}'`,
         ).join(',')})`;
       }
 
-      if (Orderby == 'name') {
-        if (Role! == 'Owner') {
-          query += ` ORDER BY accname`;
+      if (
+        State?.DBReducer?.FilterArea &&
+        State?.DBReducer?.FilterArea?.length > 0
+      ) {
+        query += ` AND areaname IN (${State?.DBReducer?.FilterArea?.map(
+          (area: string) => `'${area}'`,
+        ).join(',')})`;
+      }
+
+      if (
+        State?.DBReducer?.FilterBookname &&
+        State?.DBReducer?.FilterBookname?.length > 0
+      ) {
+        query += ` AND bookname IN (${State?.DBReducer?.FilterBookname?.map(
+          (area: string) => `'${area}'`,
+        ).join(',')})`;
+      }
+
+      if (id) {
+        if (Role! == 'Client') {
+          query += ` AND compname='${id}'`;
         } else {
-          query += ` ORDER BY compname`;
+          query += ` AND accid=${id}`;
+        }
+
+        query += ` ORDER BY invdate,invnochr ASC`;
+      } else {
+        if (Orderby == 'name') {
+          if (Role! == 'Client') {
+            query += ` ORDER BY compname`;
+          } else {
+            query += ` ORDER BY accname`;
+          }
+        }
+
+        if (Orderby == 'date') {
+          query += ` ORDER BY invdate DESC`;
+        }
+
+        if (Orderby == 'city') {
+          query += ` ORDER BY cityname`;
         }
       }
-
-      if (Orderby == 'date') {
-        query += ` ORDER BY invdate DESC`;
-      }
-
-      if (Orderby == 'city') {
-        query += ` ORDER BY cityname`;
-      }
-
-      // Date Wise
-      // SELECT * FROM saleosmst WHERE invdate BETWEEN '2023-04-01 00:00:00' AND '2024-03-31 23:59:59'
-
-      // City Wisw
-      // SELECT * FROM saleosmst WHERE cityname LIKE '%OLPAD%'
-
-      // Company Wise
-      // SELECT * FROM saleosmst WHERE compid IN (7187, 19514)
-
-      // Company Wise
-      // SELECT * FROM saleosmst WHERE agentid IN (7187, 19514)
-
-      // Day Wise
-      // SELECT * FROM saleosmst WHERE days IN (5,2)
-
-      // All Filter (Date, City)
-      // SELECT * FROM saleosmst WHERE compid IN (7187, 19514) AND cityname LIKE '%OLPAD%' AND invdate BETWEEN '2024-01-01 00:00:00' AND '2024-03-31 23:59:59'
 
       console.log('query', query);
 
       const SaleDataSql = await db.executeSql(query);
-
       const SaleData = SaleDataSql[0].rows.raw();
+
+      if (id) {
+        const PartyWiseTotal = SaleData.reduce(
+          (acc, item) => {
+            acc.TotalBillAmt += item.billamt;
+            acc.TotalReturnAmt += item.returnamt;
+            acc.TotalPrevrecAmt += item.prevrecamt;
+            acc.TotalRecAmt += item.recamt;
+            acc.TotalBalAmt += item.balamt;
+            return acc;
+          },
+          {
+            TotalBillAmt: 0,
+            TotalReturnAmt: 0,
+            TotalPrevrecAmt: 0,
+            TotalRecAmt: 0,
+            TotalBalAmt: 0,
+          },
+        );
+        thunkAPI.dispatch(SetPatyTotal(PartyWiseTotal));
+        thunkAPI.dispatch(SetPartyWiseOS(SaleData));
+
+        resolve();
+        return;
+      }
 
       const returnData = SaleData.reduce((acc, curr) => {
         const found: OSInterfase = acc.find((item: OSInterfase) =>
-          Role == 'Owner' || Role == 'Agent'
-            ? item.accid === curr.accid
-            : Role == 'Client'
+          Role == 'Client'
             ? item.compid === curr.compid
-            : null,
+            : item.accid === curr.accid,
         )!;
         if (found) {
           found.totalbill += curr.billamt;
@@ -127,6 +225,7 @@ export const GetSaleOS = createAsyncThunk(
             accid: curr.accid,
             accname: curr.accname,
             cityname: curr.cityname,
+            areaname: curr.areaname,
             compid: curr.compid,
             compname: curr.compname,
             mobile: curr.mobile,
@@ -136,35 +235,39 @@ export const GetSaleOS = createAsyncThunk(
         }
         return acc;
       }, []);
-      resolve(returnData);
+
+      thunkAPI.dispatch(SetOSData(returnData));
+
+      resolve();
     });
   },
 );
 
-export const GetPurchaseOS = createAsyncThunk(
-  'GetPurchaseOS',
-  async ({Orderby = 'name'}: {Orderby?: string}, thunkAPI) => {
-    return new Promise<OSInterfase[]>(async (resolve, reject) => {
+export const GetLedger = createAsyncThunk(
+  'GetLedger',
+  async ({id, Orderby = 'name'}: {id?: string; Orderby?: string}, thunkAPI) => {
+    console.log('Orderby', Orderby);
+    return new Promise<void>(async (resolve, reject) => {
+      const db = await getDBConnection();
       const State: any = thunkAPI.getState();
 
-      let Role: string;
-      const User = await Functions.getUser();
-      if (User?.entryrights == 'Owner') {
-        Role = 'Owner';
-      } else if (User?.acctype == 'SALES') {
-        Role = 'SALES';
-      }
+      const Date = await setDate();
+      const StartDate = State?.DBReducer?.FilterStartDate ?? Date.StartDate;
+      const EndDate = State?.DBReducer?.FilterEndDate ?? Date.EndDate;
 
-      const db = await getDBConnection();
+      const Role: 'Owner' | 'Client' | 'Agent' = State?.AppReducer?.UserRights;
 
-      let query =
-        'SELECT invnochr, accid, accname, compid, compname, cityname, billamt, purcosid FROM purcosmst';
+      const ExtractData = id
+        ? '*'
+        : 'ledgerid, compid, accid, party, crdr, balamt, cityname';
+
+      let query = `SELECT ${ExtractData} FROM ledgermst WHERE ldate >= '${StartDate}' AND ldate <= '${EndDate}'`;
 
       if (
         State?.DBReducer?.FilterCity &&
         State?.DBReducer?.FilterCity?.length > 0
       ) {
-        query += ` WHERE cityname IN (${State?.DBReducer?.FilterCity?.map(
+        query += ` AND cityname IN (${State?.DBReducer?.FilterCity?.map(
           (city: string) => `'${city}'`,
         ).join(',')})`;
       }
@@ -173,252 +276,188 @@ export const GetPurchaseOS = createAsyncThunk(
         State?.DBReducer?.FilterAgent &&
         State?.DBReducer?.FilterAgent?.length > 0
       ) {
-        if (
-          State?.DBReducer?.FilterCity &&
-          State?.DBReducer?.FilterCity.length > 0
-        ) {
-          query += ' AND ';
-        } else {
-          query += ' WHERE ';
-        }
-        query += `agentname IN (${State?.DBReducer?.FilterAgent?.map(
+        query += ` AND agentname IN (${State?.DBReducer?.FilterAgent?.map(
           (agent: string) => `'${agent}'`,
         ).join(',')})`;
       }
 
+      if (
+        State?.DBReducer?.FilterArea &&
+        State?.DBReducer?.FilterArea?.length > 0
+      ) {
+        query += ` AND areaname IN (${State?.DBReducer?.FilterArea?.map(
+          (area: string) => `'${area}'`,
+        ).join(',')})`;
+      }
+
+      if (
+        State?.DBReducer?.FilterMonth &&
+        State?.DBReducer?.FilterMonth?.length > 0
+      ) {
+        query += ` AND monthname IN (${State?.DBReducer?.FilterMonth?.map(
+          (month: string) => `'${month}'`,
+        ).join(',')})`;
+      }
+
+      if (
+        State?.DBReducer?.FilterSubschedule &&
+        State?.DBReducer?.FilterSubschedule?.length > 0
+      ) {
+        query += ` AND monthname IN (${State?.DBReducer?.FilterSubschedule?.map(
+          (subschedule: string) => `'${subschedule}'`,
+        ).join(',')})`;
+      }
+
+      // if (id) {
+      //   if (Role! == 'Client') {
+      //     query += ` AND compname='${id}'`;
+      //   } else {
+      //     query += ` AND accid=${id}`;
+      //   }
+
+      //   query += ` ORDER BY ldate`;
+      // } else {
       if (Orderby == 'name') {
-        if (Role! == 'Owner') {
-          query += ` ORDER BY accname`;
-        } else {
-          query += ` ORDER BY compname`;
-        }
+        query += ` ORDER BY party`;
       }
 
       if (Orderby == 'date') {
-        query += ` ORDER BY invdate DESC`;
+        query += ` ORDER BY ldate DESC`;
       }
 
       if (Orderby == 'city') {
         query += ` ORDER BY cityname`;
       }
+      if (Orderby == 'month') {
+        query += ` ORDER BY monthname`;
+      }
+      if (Orderby == 'subschedule') {
+        query += ` ORDER BY subschedule`;
+      }
+      // }
 
-      console.log('query', query);
+      console.log('Ledger query', query);
+      const LedgerDataSql = await db.executeSql(query);
 
-      const PurcDataSql = await db.executeSql(query);
+      const LedgerData = LedgerDataSql[0].rows.raw();
 
-      const PurcData = PurcDataSql[0].rows.raw();
+      if (id) {
+        thunkAPI.dispatch(SetPartyWiseLedger(LedgerData));
+        resolve();
+        return;
+      }
 
-      const returnData = PurcData.reduce((acc, curr) => {
-        const found: OSInterfase = acc.find((item: OSInterfase) =>
-          Role == 'Owner'
-            ? item.accid === curr.accid
-            : Role == 'SALES'
+      const returnData = LedgerData.reduce((acc, curr) => {
+        const found: AccLedgerInterfase = acc.find((item: AccLedgerInterfase) =>
+          Role == 'Client'
             ? item.compid === curr.compid
-            : null,
+            : item.accid === curr.accid,
         )!;
         if (found) {
-          found.totalbill += curr.billamt;
+          found.totalbal = curr.balamt;
+          found.crdr = curr.crdr;
         } else {
           acc.push({
             accid: curr.accid,
-            accname: curr.accname,
-            cityname: curr.cityname,
+            party: curr.party,
             compid: curr.compid,
-            compname: curr.compname,
-            id: curr.purcosid,
-            totalbill: curr.billamt,
+            crdr: curr.crdr,
+            cityname: curr.cityname,
+            // balamt: curr.balamt,
+            totalbal: curr.balamt,
           });
         }
         return acc;
       }, []);
 
-      resolve(returnData);
+      thunkAPI.dispatch(SetLedger(returnData));
+
+      resolve();
     });
   },
 );
 
-export const GetLedger = createAsyncThunk('GetLedger', async () => {
-  return new Promise<AccLedgerInterfase[]>(async (resolve, reject) => {
-    const db = await getDBConnection();
-
-    const query =
-      'SELECT ledgerid, compid, accid, party, crdr, balamt, cityname FROM ledgermst ORDER BY ldate';
-
-    const LedgerDataSql = await db.executeSql(query);
-
-    const LedgerData = LedgerDataSql[0].rows.raw();
-
-    let Role: string;
-    const User = await Functions.getUser();
-    if (User?.entryrights == 'Owner') {
-      Role = 'Owner';
-    } else if (User?.acctype == 'SALES') {
-      Role = 'SALES';
-    }
-
-    const returnData = LedgerData.reduce((acc, curr) => {
-      const found: AccLedgerInterfase = acc.find((item: AccLedgerInterfase) =>
-        Role == 'Owner'
-          ? item.accid === curr.accid
-          : Role == 'SALES'
-          ? item.compid === curr.compid
-          : null,
-      )!;
-      if (found) {
-        found.totalbal = curr.balamt;
-        found.crdr = curr.crdr;
-      } else {
-        acc.push({
-          accid: curr.accid,
-          party: curr.party,
-          compid: curr.compid,
-          crdr: curr.crdr,
-          cityname: curr.cityname,
-          // balamt: curr.balamt,
-          totalbal: curr.balamt,
-        });
-      }
-      return acc;
-    }, []);
-
-    resolve(returnData);
-  });
-});
-
-export const GetPartyWiseSaleOS = createAsyncThunk(
-  'GetPartyWiseSaleOS',
-  async ({accid, compid}: {accid: string; compid: string}, thunkAPI) => {
-    return new Promise<SaleOSDataInterfase[]>(async (resolve, reject) => {
+export const GetLedgerSummary = createAsyncThunk(
+  'GetLedgerSummary',
+  async (_, thunkAPI) => {
+    new Promise<void>(async (resolve, reject) => {
       const State: any = thunkAPI.getState();
 
-      let Role: string;
-      const User = await Functions.getUser();
-      if (User?.entryrights == 'Owner') {
-        Role = 'Owner';
-      } else if (User?.acctype == 'SALES') {
-        Role = 'SALES';
-      }
-
       const db = await getDBConnection();
-      let query = `SELECT * FROM saleosmst WHERE `;
 
-      if (Role! == 'Owner') {
-        query += `accid=${accid}`;
-      } else {
-        query += `compid=${compid}`;
-      }
+      const Date = await setDate();
+      const StartDate = State?.DBReducer?.FilterStartDate ?? Date.StartDate;
+      const EndDate = State?.DBReducer?.FilterEndDate ?? Date.EndDate;
 
-      if (
-        State?.DBReducer?.FilterCity &&
-        State?.DBReducer?.FilterCity?.length > 0
-      ) {
-        query += ` AND cityname IN (${State?.DBReducer?.FilterCity?.map(
-          (city: string) => `'${city}'`,
-        ).join(',')})`;
-      }
+      let query = `SELECT monthname,dramt,cramt,crdr,balamt FROM ledgermst WHERE invdate >= '${StartDate}' AND invdate <= '${EndDate}' GROUP BY monthname,dramt,cramt,crdr,balamt`;
 
-      // console.log('State?.DBReducer?.MastAgent', State?.DBReducer?.MastAgent);
-      if (
-        State?.DBReducer?.FilterAgent &&
-        State?.DBReducer?.FilterAgent?.length > 0
-      ) {
-        query += ` AND agentname IN (${State?.DBReducer?.FilterAgent?.map(
-          (agent: string) => `'${agent}'`,
-        ).join(',')})`;
-      }
-
-      query += ` ORDER BY invdate DESC`;
-
-      console.log('query', query);
-
-      const SaleDataSql = await db.executeSql(query);
-
-      const SaleData = SaleDataSql[0].rows.raw();
-
-      // setTimeout(() => {
-      resolve(SaleData);
-      // }, 500);
-    });
-  },
-);
-
-export const GetPartyWisePurchOS = createAsyncThunk(
-  'GetPartyWisePurchOS',
-  async ({accid, compid}: {accid: string; compid: string}, thunkAPI) => {
-    return new Promise<Datapurco[]>(async (resolve, reject) => {
-      const State: any = thunkAPI.getState();
-
-      let Role: string;
-      const User = await Functions.getUser();
-      if (User?.entryrights == 'Owner') {
-        Role = 'Owner';
-      } else if (User?.acctype == 'SALES') {
-        Role = 'SALES';
-      }
-
-      const db = await getDBConnection();
-      let query = `SELECT * FROM purcosmst WHERE `;
-
-      if (Role! == 'Owner') {
-        query += `accid=${accid}`;
-      } else {
-        query += `compid=${compid}`;
-      }
-
-      if (
-        State?.DBReducer?.FilterCity &&
-        State?.DBReducer?.FilterCity?.length > 0
-      ) {
-        query += ` AND cityname IN (${State?.DBReducer?.FilterCity?.map(
-          (city: string) => `'${city}'`,
-        ).join(',')})`;
-      }
-
-      // console.log('State?.DBReducer?.MastAgent', State?.DBReducer?.MastAgent);
-      if (
-        State?.DBReducer?.FilterAgent &&
-        State?.DBReducer?.FilterAgent?.length > 0
-      ) {
-        query += ` AND agentname IN (${State?.DBReducer?.FilterAgent?.map(
-          (agent: string) => `'${agent}'`,
-        ).join(',')})`;
-      }
-
-      query += ` ORDER BY invdate DESC`;
-
-      console.log('query', query);
-
-      const PurchDataSql = await db.executeSql(query);
-
-      const PurchData = PurchDataSql[0].rows.raw();
-
-      resolve(PurchData);
+      const SummaryDataSql = await db.executeSql(query);
+      console.log('SummaryDataSql', SummaryDataSql);
+      const SummaryData = SummaryDataSql[0].rows.raw();
     });
   },
 );
 
 export const GetPartyWiseLedger = createAsyncThunk(
   'GetPartyWiseLedger',
-  async ({accid, compid}: {accid: string; compid: string}) => {
-    return new Promise<LedgerDataInterfase[]>(async (resolve, reject) => {
+  async (
+    {party, accid, CompID}: {party: string; accid?: string; CompID: string},
+    thunkAPI,
+  ) => {
+    return new Promise<void>(async (resolve, reject) => {
+      const State: any = thunkAPI.getState();
       const User = await Functions.getUser();
 
-      const db = await getDBConnection();
-      let query = `SELECT * FROM ledgermst WHERE `;
+      const Date = await setDate();
+      const StartDate = State?.DBReducer?.FilterStartDate ?? Date.StartDate;
+      const EndDate = State?.DBReducer?.FilterEndDate ?? Date.EndDate;
 
-      if (User?.entryrights == 'Owner') {
-        query += `accid=${accid}`;
-      } else if (User?.acctype == 'SALES') {
-        query += `compid=${compid}`;
+      const db = await getDBConnection();
+
+      // let query = `SELECT ledgerid, compname,
+      //             CASE WHEN account = 'OPENING AMOUNT' THEN 'AA' ELSE '' END AS op,
+      //             ldate, account, round(dramt, 2) AS dramt, round(cramt, 2) AS cramt,
+      //             round(balamt, 2) AS balamt,
+      //             crdr, narration, remarks, cheque, cityname, agentName, subschedule, monthname
+      //             FROM ledgermst
+      //             LEFT JOIN compmst ON compmst.compid = ledgermst.compid
+      //             WHERE ledgermst.entryemail = '${User.entryemail}'
+      //             AND compmst.compid=${CompID}
+      //             `;
+      let query = `SELECT CASE WHEN account = 'OPENING AMOUNT' THEN 'AA' ELSE '' END AS op, ledgermst.* FROM ledgermst LEFT JOIN compmst ON compmst.compid=ledgermst.compid WHERE ledgermst.entryemail='${User.entryemail}' AND compmst.compid=${CompID} `;
+
+      if (accid) {
+        query += ` AND ledgermst.accid=${accid}`;
       }
+
+      if (
+        State?.DBReducer?.FilterMonth &&
+        State?.DBReducer?.FilterMonth?.length > 0
+      ) {
+        query += ` AND monthname IN (${State?.DBReducer?.FilterMonth?.map(
+          (month: string) => `'${month}'`,
+        ).join(',')})`;
+      }
+
+      if (
+        State?.DBReducer?.FilterSubschedule &&
+        State?.DBReducer?.FilterSubschedule?.length > 0
+      ) {
+        query += ` AND monthname IN (${State?.DBReducer?.FilterSubschedule?.map(
+          (subschedule: string) => `'${subschedule}'`,
+        ).join(',')})`;
+      }
+
+      query += ` AND ledgermst.ldate >= '${StartDate}' AND ledgermst.ldate <= '${EndDate}' AND ledgermst.party IN ('${party}') ORDER BY ledgerid, date(ldate), op ASC;`;
+
+      console.log('GetPartyWiseLedger query', query);
 
       const LedgerDataSql = await db.executeSql(query);
 
       const LedgerData = LedgerDataSql[0].rows.raw();
-
-      // setTimeout(() => {
-      resolve(LedgerData);
-      // }, 500);
+      console.log('LedgerData', LedgerData);
+      thunkAPI.dispatch(SetPartyWiseLedger(LedgerData));
+      resolve();
     });
   },
 );
@@ -485,10 +524,12 @@ export const GetAccWiseColdList = createAsyncThunk(
   },
 );
 
+// To Get All Data For Filter
 interface FilterData {
   MastCity: {label: string; value: string}[];
   MastAgent: {label: string; value: string}[];
   MastArea: {label: string; value: string}[];
+  MastBookname: {label: string; value: string}[];
 }
 export const GetFilterData = createAsyncThunk(
   'GetFilterData',
@@ -504,6 +545,10 @@ export const GetFilterData = createAsyncThunk(
       const AgentDataSql = await db.executeSql(Agentquery);
       const AgentData = AgentDataSql[0].rows.raw();
 
+      let Booknamequery = `SELECT bookname FROM ${dbName} GROUP BY bookname ORDER BY bookname`;
+      const BooknameDataSql = await db.executeSql(Booknamequery);
+      const BooknameData = BooknameDataSql[0].rows.raw();
+
       // let Areaquery = `SELECT agentname FROM ${dbName} GROUP BY agentname ORDER BY agentname`;
       let Areaquery = `SELECT areaname FROM ${dbName} where areaname IS NOT NULL GROUP BY areaname ORDER BY areaname`;
       const AreaDataSql = await db.executeSql(Areaquery);
@@ -518,40 +563,148 @@ export const GetFilterData = createAsyncThunk(
       const Area = AreaData.map(area => {
         return {label: area.areaname, value: area.areaname};
       });
-      resolve({MastAgent: Agent, MastCity: City, MastArea: Area});
+      const Bookname = BooknameData.map(bookname => {
+        return {label: bookname.bookname, value: bookname.bookname};
+      });
+      resolve({
+        MastAgent: Agent,
+        MastCity: City,
+        MastArea: Area,
+        MastBookname: Bookname,
+      });
+    });
+  },
+);
+
+interface GetLedgerFilterDataProps {
+  MastCity: {label: string; value: string}[];
+  MastAgent: {label: string; value: string}[];
+  MastCompany: {label: string; value: string}[];
+  MasterMonth: {label: string; value: string}[];
+  MasterSubschedule: {label: string; value: string}[];
+}
+
+export const GetLedgerFilterData = createAsyncThunk(
+  'GetLedgerFilterData',
+  async () => {
+    return new Promise<GetLedgerFilterDataProps>(async (resolve, reject) => {
+      const db = await getDBConnection();
+      let Cityquery = `SELECT cityname FROM ledgermst GROUP BY cityname ORDER BY cityname`;
+      const CityDataSql = await db.executeSql(Cityquery);
+      const CityData = CityDataSql[0].rows.raw();
+
+      let Agentquery = `SELECT agentName FROM ledgermst GROUP BY agentName`;
+      const AgentDataSql = await db.executeSql(Agentquery);
+      const AgentData = AgentDataSql[0].rows.raw();
+
+      let subscheduleQuery = `SELECT subschedule FROM ledgermst GROUP BY subschedule ORDER BY subschedule`;
+      const subscheduleQuerySql = await db.executeSql(subscheduleQuery);
+      const subscheduleData = subscheduleQuerySql[0].rows.raw();
+
+      let monthNameQuery = `SELECT monthname FROM ledgermst GROUP BY monthname ORDER BY  CASE 
+        WHEN monthname = 'January' THEN 1
+        WHEN monthname = 'February' THEN 2
+        WHEN monthname = 'March' THEN 3
+        WHEN monthname = 'April' THEN 4
+        WHEN monthname = 'May' THEN 5
+        WHEN monthname = 'June' THEN 6
+        WHEN monthname = 'July' THEN 7
+        WHEN monthname = 'August' THEN 8
+        WHEN monthname = 'September' THEN 9
+        WHEN monthname = 'October' THEN 10
+        WHEN monthname = 'November' THEN 11
+        ELSE 12
+      END;`;
+      const monthNameQuerySql = await db.executeSql(monthNameQuery);
+      const monthNameData = monthNameQuerySql[0].rows.raw();
+
+      let companyQuery = `SELECT compmst.compid,compmst.compname, compmst.compyearname FROM ledgermst LEFT JOIN compmst WHERE compmst.compid=ledgermst.compid GROUP BY ledgermst.compid ORDER BY compmst.compid`;
+      const companyQuerySql = await db.executeSql(companyQuery);
+      const companyData = companyQuerySql[0].rows.raw();
+
+      const City = CityData.map(city => {
+        return {label: city.cityname, value: city.cityname};
+      });
+      const Agent = AgentData.map(agent => {
+        return {label: agent.agentname, value: agent.agentname};
+      });
+      const Company = companyData.map(company => {
+        return {label: company.compyearname, value: company.compid};
+      });
+      const MonthName = monthNameData.map(month => {
+        return {label: month.monthname, value: month.monthname};
+      });
+      const SubSchedule = subscheduleData.map(subschedule => {
+        return {label: subschedule.subschedule, value: subschedule.subschedule};
+      });
+
+      resolve({
+        MastAgent: Agent,
+        MastCity: City,
+        MastCompany: Company,
+        MasterMonth: MonthName,
+        MasterSubschedule: SubSchedule,
+      });
     });
   },
 );
 
 const initialState: DBInitInterface = {
-  PartyWiseOS: [],
-  PartyWisePurchOS: [],
-  PartyWiseLedger: [],
-  FilterList: [],
   MastList: [],
+  FilterList: [],
+  PartyWiseOS: [],
+  PartyTotal: {
+    TotalBalAmt: 0,
+    TotalBillAmt: 0,
+    TotalPrevrecAmt: 0,
+    TotalRecAmt: 0,
+    TotalReturnAmt: 0,
+  },
+  PartyWiseLedger: [],
   FilterLedger: [],
   MastLedger: [],
+  MastBookname: [],
   MastAgent: [],
   MastCity: [],
   MastArea: [],
+  MastCompany: [],
+  MasterMonth: [],
+  MasterSubschedule: [],
+  FilterLedgerComp: '',
+  FilterMonth: [],
+  FilterSubschedule: [],
   FilterAgent: [],
   FilterArea: [],
   FilterCity: [],
+  FilterBookname: [],
   LotWiseList: [],
   ApplyFilter: false,
+  // EndDate: dayjs('2022-05-01').format('YYYY-MM-DDTHH:mm:ss'),
+  FilterEndDate: undefined,
+  FilterStartDate: undefined,
+  // FilterStartDate: dayjs('2022-04-01').format('YYYY-MM-DD HH:mm:ss'),
+  FilterCompany: [],
 };
 
 const DBReducer = createSlice({
   name: 'DBReducer',
   initialState,
   reducers: {
-    SetResetFilter: (state, {payload}) => {
-      state.ApplyFilter = true;
-      state.FilterAgent = [];
-      state.FilterCity = [];
+    SetOSData: (state, {payload}) => {
+      state.MastList = payload;
+      state.FilterList = payload;
     },
-    SetApplyFilter: (state, {payload}) => {
-      state.ApplyFilter = payload;
+    SetPartyWiseOS: (state, {payload}) => {
+      state.PartyWiseOS = payload;
+    },
+    SetPatyTotal: (state, {payload}) => {
+      state.PartyTotal = payload;
+    },
+    SetFilterStartDate: (state, {payload}) => {
+      state.FilterStartDate = payload;
+    },
+    SetFilterEndDate: (state, {payload}) => {
+      state.FilterEndDate = payload;
     },
     SetFilterAgent: (state, {payload}) => {
       state.FilterAgent = payload;
@@ -559,79 +712,118 @@ const DBReducer = createSlice({
     SetFilterCity: (state, {payload}) => {
       state.FilterCity = payload;
     },
+    SetFilterLedgerComp: (state, {payload}) => {
+      state.FilterLedgerComp = payload;
+    },
     SetFilterArea: (state, {payload}) => {
       state.FilterArea = payload;
     },
-    SetPartyWiseOS: (state, {payload}) => {
-      state.PartyWiseOS = payload;
+    SetFilterMonth: (state, {payload}) => {
+      state.FilterMonth = payload;
     },
-    SetPartyWisePurchOS: (state, {payload}) => {
-      state.PartyWisePurchOS = payload;
+    SetFilterSubschedule: (state, {payload}) => {
+      state.FilterSubschedule = payload;
+    },
+    SetFilterBookname: (state, {payload}) => {
+      state.FilterBookname = payload;
+    },
+    SetResetFilter: (state, {payload}) => {
+      state.ApplyFilter = true;
+      state.FilterAgent = [];
+      state.FilterCity = [];
+      state.FilterArea = [];
+      state.FilterBookname = [];
+      state.FilterMonth = [];
+      state.FilterSubschedule = [];
+    },
+    SetApplyFilter: (state, {payload}) => {
+      state.ApplyFilter = payload;
+    },
+    SetLedger: (state, {payload}) => {
+      state.MastLedger = payload;
+      state.FilterLedger = payload;
     },
     SetPartyWiseLedger: (state, {payload}) => {
       state.PartyWiseLedger = payload;
     },
+
     SetFilterList: (state, {payload}) => {
       state.FilterList = payload;
-    },
-    SetMastList: (state, {payload}) => {
-      state.MastList = payload;
     },
     SetFilterLedger: (state, {payload}) => {
       state.FilterLedger = payload;
     },
-    SetMastLedger: (state, {payload}) => {
-      state.MastLedger = payload;
+    SetOSCompny: (state, {payload}) => {
+      console.log('payload', payload);
+      // const Company = state.FilterCompany;
+      // const SelectedComp = Company.filter(comp => comp.compid == payload);
+      state.FilterCompany.map(company => {
+        if (company.compid == payload) {
+          company.selected = !company.selected;
+        }
+      });
+      console.log('state.FilterCompany', state.FilterCompany);
     },
   },
   extraReducers(builder) {
-    builder.addCase(GetSaleOS.fulfilled, (state, {payload}) => {
-      state.MastList = payload;
-      state.FilterList = payload;
+    builder.addCase(GetCompanys.fulfilled, (state, {payload}) => {
+      state.FilterCompany = payload;
     });
-    builder.addCase(GetPurchaseOS.fulfilled, (state, {payload}) => {
-      state.MastList = payload;
-      state.FilterList = payload;
+    builder.addCase(GetSaleOS.fulfilled, (state, {payload}) => {
+      // state.MastList = payload;
+      // state.FilterList = payload;
     });
     builder.addCase(GetLedger.fulfilled, (state, {payload}) => {
-      state.FilterLedger = payload;
-      state.MastLedger = payload;
-    });
-    builder.addCase(GetPartyWiseSaleOS.fulfilled, (state, {payload}) => {
-      state.PartyWiseOS = payload;
-    });
-    builder.addCase(GetPartyWisePurchOS.fulfilled, (state, {payload}) => {
-      state.PartyWisePurchOS = payload;
+      // state.FilterLedger = payload;
+      // state.MastLedger = payload;
     });
     builder.addCase(GetPartyWiseLedger.fulfilled, (state, {payload}) => {
-      state.PartyWiseLedger = payload;
+      // state.PartyWiseLedger = payload;
     });
     builder.addCase(GetFilterData.fulfilled, (state, {payload}) => {
-      const {MastAgent, MastCity, MastArea} = payload;
+      const {MastAgent, MastCity, MastArea, MastBookname} = payload;
       state.MastAgent = MastAgent;
       state.MastCity = MastCity;
       state.MastArea = MastArea;
+      state.MastBookname = MastBookname;
     });
     builder.addCase(GetLotWiseColdList.fulfilled, (state, {payload}) => {
       state.LotWiseList = payload;
     });
     builder.addCase(GetAccWiseColdList.fulfilled, (state, {payload}) => {});
+    builder.addCase(GetLedgerFilterData.fulfilled, (state, {payload}) => {
+      const {MastAgent, MastCity, MastCompany, MasterMonth, MasterSubschedule} =
+        payload;
+
+      state.MastAgent = MastAgent;
+      state.MastCity = MastCity;
+      state.MastCompany = MastCompany;
+      state.MasterMonth = MasterMonth;
+      state.MasterSubschedule = MasterSubschedule;
+    });
   },
 });
 
 export const {
   SetFilterLedger,
   SetFilterList,
-  SetMastLedger,
-  SetMastList,
   SetPartyWiseLedger,
   SetPartyWiseOS,
-  SetPartyWisePurchOS,
   SetFilterCity,
   SetApplyFilter,
   SetResetFilter,
   SetFilterAgent,
   SetFilterArea,
+  SetFilterEndDate,
+  SetFilterStartDate,
+  SetOSData,
+  SetPatyTotal,
+  SetLedger,
+  SetFilterBookname,
+  SetFilterMonth,
+  SetFilterSubschedule,
+  SetFilterLedgerComp,
+  SetOSCompny,
 } = DBReducer.actions;
 
 export default DBReducer.reducer;

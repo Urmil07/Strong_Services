@@ -1,11 +1,12 @@
-import {StyleSheet, TextInput, TextInputProps, View} from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
-import {FormValues} from '@/Interfaces/Common';
-import normalize from 'react-native-normalize';
 import {Colors, FontFamily, FontSize} from '@/Constants';
-import FontAwesome from 'react-native-vector-icons/FontAwesome6';
-import RNCText from './RNCText';
 import {Control, FieldPath, useController} from 'react-hook-form';
+import React, {useEffect, useRef, useState} from 'react';
+import {StyleSheet, TextInput, TextInputProps, View} from 'react-native';
+
+import FontAwesome from 'react-native-vector-icons/FontAwesome6';
+import {FormValues} from '@/Interfaces/Common';
+import RNCText from './RNCText';
+import normalize from 'react-native-normalize';
 
 // type Prop = TextInputPropsOptional & {
 type Prop = TextInputProps & {
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
   container: {
     // height: normalize(50),
     backgroundColor: Colors.backgroundSecondary,
-    borderRadius: 12,
+    borderRadius: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: normalize(5),

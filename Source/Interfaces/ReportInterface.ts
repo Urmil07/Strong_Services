@@ -118,6 +118,10 @@ export interface Dataledger {
   remarks: string;
   agentName: string;
   cityname: string;
+  acctype: string;
+  subschedule: string;
+  compcode: string;
+  monthname: string;
 }
 
 export interface Datapurco {
@@ -134,6 +138,8 @@ export interface Datapurco {
   invdate: string;
   accname?: any;
   cityname: string;
+  areaname: string;
+  compcode: string;
   mobile: string;
   billamt: string;
   prevrecamt: string;

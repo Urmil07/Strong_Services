@@ -1,3 +1,4 @@
+import {Colors, FontFamily, FontSize, isAndroid} from '@Constants';
 import {
   FlatList,
   Pressable,
@@ -8,15 +9,15 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import {RNCNodata, RNCText} from 'Common';
 import React, {useEffect, useState} from 'react';
-import {Colors, FontFamily, FontSize, isAndroid} from '@Constants';
-import normalize from 'react-native-normalize';
-import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
-import {RNCText} from 'Common';
-import {ColdListPageProps} from '@/Interfaces/AppStackParamList';
 import {useAppDispatch, useAppSelector} from '@ReduxHook';
-import {GetLotWiseColdList} from 'Reducers';
+
+import {ColdListPageProps} from '@/Interfaces/AppStackParamList';
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
+import {GetLotWiseColdList} from 'Reducers';
+import normalize from 'react-native-normalize';
 
 const ColdList = ({navigation, route}: ColdListPageProps) => {
   const {type} = route.params;
@@ -171,18 +172,7 @@ const ColdList = ({navigation, route}: ColdListPageProps) => {
           }}
           contentContainerStyle={{gap: 5}}
           style={{marginBottom: 10, flex: 1}}
-          ListEmptyComponent={() => (
-            <View
-              style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-              <RNCText family={FontFamily.Bold} size={FontSize.font20}>
-                No Data...
-              </RNCText>
-            </View>
-          )}
+          ListEmptyComponent={RNCNodata}
         />
       </View>
     </View>

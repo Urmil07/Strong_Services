@@ -1,13 +1,12 @@
 interface OSInterfase {
   totalbill: string;
   cityname: string;
+  areaname: string;
   accid: string;
   accname: string;
   compid: string;
   compname: string;
   mobile: string;
-  id: string;
-  // data: SaleOSDataInterfase[];
 }
 
 interface AccLedgerInterfase {
@@ -47,21 +46,26 @@ interface SaleOSDataInterfase {
 }
 
 interface LedgerDataInterfase {
-  accid: number;
-  account: string;
+  accid: number; // x
+  account: string; // x
   agentName: string;
-  balamt: number;
+  balamt: number; // x
   cheque: string;
   cityname: string;
   compid: number;
-  cramt: number;
-  crdr: string;
-  dramt: number;
-  entryemail: string;
-  entryid: number;
-  ldate: string;
+  cramt: number; // x
+  crdr: string; // x
+  dramt: number; // x
+  entryemail: string; // x
+  entryid: number; // x
+  ldate: string; // x
   ledgerid: number;
   narration: string;
-  party: string;
+  party: string; // x
   remarks: string;
+  monthname: string; // x
+  acctype: string;
+  subschedule: string;
+  compcode: string;
+  op: string;
 }

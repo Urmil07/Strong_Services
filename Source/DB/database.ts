@@ -136,7 +136,11 @@ const TableData = () => {
                     narration TEXT,
                     remarks TEXT,
                     agentName TEXT,
-                    cityname TEXT`,
+                    cityname TEXT,
+                    acctype TEXT,
+                    subschedule TEXT,
+                    compcode TEXT,
+                    monthname TEXT`,
     },
     {
       table_name: 'purcosmst',
@@ -153,6 +157,8 @@ const TableData = () => {
                     invdate TEXT,
                     accname TEXT,
                     cityname TEXT,
+                    areaname TEXT,
+                    compcode TEXT,
                     mobile TEXT,
                     billamt INTEGER,
                     prevrecamt INTEGER,
@@ -259,6 +265,46 @@ export const createTable = async (db: SQLiteDatabase) => {
     const query = `CREATE TABLE IF NOT EXISTS ${table.table_name} (${table.table_field})`;
     await db.executeSql(query);
   });
+};
+
+export const DeleteAllData = async () => {
+  const db = await getDBConnection();
+
+  const Tables = TableData();
+  const DeleteQury = Tables?.map(async table => {
+    return new Promise<void>(async (resolve, reject) => {
+      // const query = `DELETE FROM ${table.table_name}`;
+      db.transaction(tx => {
+        tx.executeSql(
+          `DELETE FROM ${table.table_name} `,
+          [],
+          (tx, results) => {
+            if (results.rowsAffected > 0) {
+              console.log(
+                `All data deleted from the table ${table.table_name} `,
+              );
+            }
+          },
+          error => {
+            // Handle error
+            console.log(`Error deleting data from the table: ${error} `);
+            return false;
+          },
+        );
+      });
+      // await db.executeSql(query);
+    });
+  });
+
+  Promise.all(DeleteQury)
+    .then(successResults => {
+      return;
+      console.log('DeleteAllData successResults >>>>>');
+    })
+    .catch(async error => {
+      return;
+      console.error('Error in insert queries:', error);
+    });
 };
 
 export async function DeleteTable(tableName: string) {

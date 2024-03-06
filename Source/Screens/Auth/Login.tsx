@@ -1,12 +1,4 @@
 import {
-  Pressable,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  View,
-} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {
   Colors,
   FontFamily,
   FontSize,
@@ -14,14 +6,23 @@ import {
   isAndroid,
   normalize,
 } from '@Constants';
-import {RNCButton, RNCDropdown, RNCText, RNCTextInput} from 'Common';
-import FontAwesome from 'react-native-vector-icons/FontAwesome6';
-import FastImage from 'react-native-fast-image';
-import {useAppDispatch, useAppSelector} from '@ReduxHook';
 import {Estronglogin, SetIsAuth, SetUserRights} from 'Reducers';
-import {useForm} from 'react-hook-form';
+import {
+  Pressable,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  View,
+} from 'react-native';
+import {RNCButton, RNCDropdown, RNCText, RNCTextInput} from 'Common';
+import React, {useEffect, useState} from 'react';
+import {useAppDispatch, useAppSelector} from '@ReduxHook';
+
+import FastImage from 'react-native-fast-image';
+import FontAwesome from 'react-native-vector-icons/FontAwesome6';
 import {FormValues} from '@/Interfaces/Common';
 import {Functions} from '@Utils';
+import {useForm} from 'react-hook-form';
 
 const LoginType = [
   {label: 'OWNER', value: 'OWNER'},
@@ -225,6 +226,7 @@ const Login = () => {
               title="EntryId"
               name="EntryId"
               placeholder="Enter Entry ID"
+              autoCapitalize="none"
               placeholderTextColor={Colors.Black}
               leftContainer={
                 <View style={styles.LeftContainer}>

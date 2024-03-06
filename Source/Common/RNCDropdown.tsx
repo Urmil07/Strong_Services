@@ -1,8 +1,9 @@
-import {ImageStyle, StyleSheet, TextStyle, View, ViewStyle} from 'react-native';
-import React from 'react';
-import {Dropdown} from 'react-native-element-dropdown';
-import normalize from 'react-native-normalize';
 import {Colors, FontFamily, FontSize} from '@Constants';
+import {ImageStyle, StyleSheet, TextStyle, View, ViewStyle} from 'react-native';
+
+import {Dropdown} from 'react-native-element-dropdown';
+import React from 'react';
+import normalize from 'react-native-normalize';
 
 export interface DropDownProps {
   Data: any[];
@@ -21,6 +22,7 @@ export interface DropDownProps {
   containerstyle?: ViewStyle;
   iconstyle?: ImageStyle;
   search?: boolean;
+  iconColor?: string;
 }
 
 const RNCDropdown = (prop: DropDownProps) => {
@@ -64,7 +66,7 @@ const RNCDropdown = (prop: DropDownProps) => {
         value={value}
         onChange={onChange}
         itemTextStyle={[styles.itemTextStyle, itemtextstyle]}
-        fontFamily={FontFamily.Regular}
+        // fontFamily={FontFamily.Medium}
         {...restProps}
       />
     </View>
@@ -78,10 +80,10 @@ const styles = StyleSheet.create({
   dropdown: {
     padding: normalize(10),
     backgroundColor: Colors.backgroundSecondary,
-    borderRadius: 12,
+    borderRadius: 8,
   },
   containerStyle: {
-    borderRadius: 12,
+    borderRadius: 10,
   },
   icon: {
     marginRight: 5,

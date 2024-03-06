@@ -1,19 +1,20 @@
-import {FetchMethod, URL} from '@Constants';
-import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
-import {Estronglogin} from './LoginReducer';
 import {DeleteTable, db, getDBConnection} from '@/DB/database';
-import {EstrongReportInterface} from '@/Interfaces/ReportInterface';
+import {FetchMethod, URL} from '@Constants';
 import {
   GetAccWiseColdList,
+  GetCompanys,
   GetFilterData,
   GetLedger,
+  GetLedgerFilterData,
+  GetLedgerSummary,
   GetLotWiseColdList,
   GetPartyWiseLedger,
-  GetPartyWisePurchOS,
-  GetPartyWiseSaleOS,
-  GetPurchaseOS,
   GetSaleOS,
 } from './DBReducer';
+import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
+
+import {EstrongReportInterface} from '@/Interfaces/ReportInterface';
+import {Estronglogin} from './LoginReducer';
 import {SQLiteDatabase} from 'react-native-sqlite-storage';
 
 interface State {
@@ -40,178 +41,6 @@ export const EstrongReport = createAsyncThunk(
         throw new Error(response.message);
       }
 
-      // const data = {
-      //   status: 200,
-      //   message: 'Get Sale Report list Successfully',
-      //   data_saleos: [
-      //     {
-      //       saleosid: '5277',
-      //       entryid: '0',
-      //       entryemail: 'patelmattressworld@gmail.com',
-      //       compid: '2046',
-      //       accid: '161503',
-      //       agentid: '161514',
-      //       bookname: 'TAX SALES INVOICE',
-      //       compname: 'PATEL MATTRESS WORLD',
-      //       agentname: 'SHREE DWARIKA FURNISHING (KIRAN SONI)',
-      //       invnochr: '3008T',
-      //       invdate: '2022-08-06 00:00:00',
-      //       accname: 'AMRATLAL & DHIRAJLAL & COMPANY',
-      //       cityname: 'MUMBAI CITY',
-      //       mobile: '',
-      //       billamt: '4893',
-      //       prevrecamt: '0',
-      //       returnamt: '0',
-      //       recamt: '0',
-      //       runbalamt: '4893',
-      //       balamt: '4893',
-      //       days: '49',
-      //       customeremail: '',
-      //     },
-      //   ],
-      //   data_purcos: [
-      //     {
-      //       purcosid: '10360',
-      //       entryid: '0',
-      //       entryemail: 'dssnvs@gmail.com',
-      //       compid: '2048',
-      //       accid: '24121',
-      //       agentid: '1110',
-      //       bookname: 'PURCHASE INVOICE',
-      //       compname: 'GAURI CREATION',
-      //       agentname: 'RB AGENCY',
-      //       invnochr: '1989',
-      //       invdate: '2022-01-22 00:00:00',
-      //       accname: null,
-      //       cityname: 'SURAT',
-      //       mobile: '',
-      //       billamt: '48178',
-      //       prevrecamt: '0',
-      //       returnamt: '0',
-      //       recamt: '0',
-      //       runbalamt: '48178',
-      //       balamt: '48178',
-      //       days: '248',
-      //       CustomerEmail: '',
-      //     },
-      //   ],
-      //   data_ledger: [
-      //     {
-      //       ledgerid: '129540',
-      //       entryid: '0',
-      //       entryemail: 'pratik9094@gmail.com',
-      //       compid: '2055',
-      //       accid: '2916',
-      //       party: null,
-      //       ldate: null,
-      //       account: null,
-      //       cheque: null,
-      //       dramt: null,
-      //       cramt: '0',
-      //       balamt: '0',
-      //       crdr: '',
-      //       narration: '',
-      //       remarks: '',
-      //       agentName: 'Delete This Account',
-      //       cityname: 'SURAT',
-      //     },
-      //   ],
-      //   data_coldmst: [
-      //     {
-      //       coldid: '93',
-      //       entryid: null,
-      //       entryemail: 'info@siddharthgroups.com',
-      //       compid: '2040',
-      //       accid: '1122',
-      //       agentid: '0',
-      //       bookname: 'INWARD CHALLAN',
-      //       compname: 'SIDDHARTH AGRO INDUSTRIES',
-      //       accname: 'M/S L. K. & SONS',
-      //       delparty: '',
-      //       agentname: '',
-      //       srnochr: '305',
-      //       SerialDt: '2021-06-01 00:00:00',
-      //       chldt: '2021-06-01 00:00:00',
-      //       outwardnochr: '1275',
-      //       lotno: '305-21-2122',
-      //       itemname: 'VATANA DAL',
-      //       partylot: '',
-      //       vakkal: 'KICHAN KING',
-      //       chamberlocation: null,
-      //       cadno: '',
-      //       outwrdcadno: '',
-      //       qty: '21',
-      //       weight: '630',
-      //       outqty: '1',
-      //       outweight: '30',
-      //       balqty: '20',
-      //       balweight: '600',
-      //       netbalqty: '6',
-      //       VehicleNo: null,
-      //       OutwardLrDt: null,
-      //       OutwardChlDt: null,
-      //       InwGridremarks: 'TESTING1',
-      //       inwremark: '',
-      //       outwrdremark: '',
-      //       OutGridremarks: '',
-      //     },
-      //   ],
-      //   data_coldstksummst: [
-      //     {
-      //       coldstkid: '24494',
-      //       entryid: '0',
-      //       entryemail: 'balajifoodsandcoldstorage@gmail.com',
-      //       compid: '2051',
-      //       accid: '2033',
-      //       agentid: '0',
-      //       bookname: 'INWARD CHALLAN',
-      //       compname: 'BALAJI FOODS AND COLD STORAGE',
-      //       accname: 'DAHYABHAI JAMNADAS',
-      //       agentname: '',
-      //       srnochr: '45',
-      //       serialdt: '2020-04-05 00:00:00',
-      //       chldt: '2020-04-05 00:00:00',
-      //       lotno: '45-158-2021',
-      //       itemname: 'ADAD',
-      //       partylot: '',
-      //       vakkal: '',
-      //       qty: '79',
-      //       weight: '3950',
-      //       chlnochr: '',
-      //       outqty: '45',
-      //       outweight: '2250',
-      //       balqty: '34',
-      //       balweight: '1700',
-      //       OutwardLrDt: '0000-00-00 00:00:00',
-      //       InwGridremarks: '',
-      //     },
-      //   ],
-      //   data_itemmst: [
-      //     {
-      //       id: '1',
-      //       itemid: '359',
-      //       ItemName: 'ACETON 4.5 LTR',
-      //       ItemGrpName: 'ACETONE',
-      //       UnitName: 'LTR',
-      //       EntryEmail: 'dssnvs@gmail.com',
-      //       CompId: '2034',
-      //     },
-      //   ],
-      //   data_compmst: [
-      //     {
-      //       compid: '2046',
-      //       entryid: null,
-      //       entryemail: 'patelmattressworld@gmail.com',
-      //       compname: 'PATEL MATTRESS WORLD',
-      //       compmaindb: 'PMWCLMAIN',
-      //       compyearwiseemail: '',
-      //       compyearname: 'PATEL MATTRESS WORLD 2022-23',
-      //       compyeardbname: 'PMWCLMAINYr2022Id6',
-      //       installdate: '2022-09-24 00:00:00',
-      //     },
-      //   ],
-      // };
-
       const db = await getDBConnection();
       console.log('response', response.status);
       await AddFetchData(response, db);
@@ -230,7 +59,6 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
       if (response.data_saleos.length > 0) {
         await DeleteTable('saleosmst');
         await db.transaction(tx => {
-          console.log('response.data_saleos', response.data_saleos[0]);
           const Rdata_saleos = response.data_saleos.map(data => {
             return new Promise<number>(async (resolve, reject) => {
               const {
@@ -320,6 +148,7 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
         await DeleteTable('purcosmst');
 
         await db.transaction(tx => {
+          console.log('response.data_purcos', response.data_purcos[0]);
           const Rdata_purcos = response.data_purcos.map(data => {
             return new Promise<number>((resolve, reject) => {
               const {
@@ -345,9 +174,12 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                 recamt,
                 returnamt,
                 runbalamt,
+                areaname,
+                compcode,
               } = data;
+
               tx.executeSql(
-                `INSERT INTO purcosmst (CustomerEmail,accid,accname,agentid,agentname,balamt,billamt,bookname,cityname,compid,compname,days,entryemail,entryid,invdate,invnochr,mobile,prevrecamt,purcosid,recamt,returnamt,runbalamt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                `INSERT INTO purcosmst (CustomerEmail,accid,accname,agentid,agentname,balamt,billamt,bookname,cityname,compid,compname,days,entryemail,entryid,invdate,invnochr,mobile,prevrecamt,purcosid,recamt,returnamt,runbalamt,areaname,compcode) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 [
                   CustomerEmail,
                   accid,
@@ -371,6 +203,8 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                   recamt,
                   returnamt,
                   runbalamt,
+                  areaname,
+                  compcode,
                 ],
                 (tx, results) => {
                   if (results.rowsAffected > 0) {
@@ -415,10 +249,14 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                 narration,
                 party,
                 remarks,
+                acctype,
+                compcode,
+                monthname,
+                subschedule,
               } = data;
 
               tx.executeSql(
-                `INSERT INTO ledgermst (accid,account,agentName,balamt,cheque,cityname,compid,cramt,crdr,dramt,entryemail,entryid,ldate,ledgerid,narration,party,remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                `INSERT INTO ledgermst (accid,account,agentName,balamt,cheque,cityname,compid,cramt,crdr,dramt,entryemail,entryid,ldate,ledgerid,narration,party,remarks,acctype,compcode,monthname,subschedule) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 [
                   accid,
                   account,
@@ -437,6 +275,10 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                   narration,
                   party,
                   remarks,
+                  acctype,
+                  compcode,
+                  monthname,
+                  subschedule,
                 ],
                 (tx, results) => {
                   if (results.rowsAffected > 0) {
@@ -747,22 +589,22 @@ const AppReducer = createSlice({
     builder.addCase(Estronglogin.rejected, state => {
       state.Loading = false;
     });
+    builder.addCase(GetCompanys.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetCompanys.fulfilled, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetCompanys.rejected, state => {
+      state.Loading = false;
+    });
     builder.addCase(GetSaleOS.pending, state => {
       state.Loading = true;
     });
     builder.addCase(GetSaleOS.fulfilled, state => {
-      state.Loading = false;
+      // state.Loading = false;
     });
     builder.addCase(GetSaleOS.rejected, state => {
-      state.Loading = false;
-    });
-    builder.addCase(GetPurchaseOS.pending, state => {
-      state.Loading = true;
-    });
-    builder.addCase(GetPurchaseOS.rejected, state => {
-      state.Loading = false;
-    });
-    builder.addCase(GetPurchaseOS.fulfilled, state => {
       state.Loading = false;
     });
     builder.addCase(GetLedger.pending, state => {
@@ -772,15 +614,6 @@ const AppReducer = createSlice({
       state.Loading = false;
     });
     builder.addCase(GetLedger.fulfilled, state => {
-      state.Loading = false;
-    });
-    builder.addCase(GetPartyWiseSaleOS.pending, state => {
-      state.Loading = true;
-    });
-    builder.addCase(GetPartyWiseSaleOS.rejected, state => {
-      state.Loading = false;
-    });
-    builder.addCase(GetPartyWiseSaleOS.fulfilled, state => {
       state.Loading = false;
     });
     builder.addCase(GetPartyWiseLedger.pending, state => {
@@ -819,14 +652,23 @@ const AppReducer = createSlice({
     builder.addCase(GetAccWiseColdList.fulfilled, state => {
       state.Loading = false;
     });
-    builder.addCase(GetPartyWisePurchOS.pending, state => {
+    builder.addCase(GetLedgerSummary.pending, state => {
       state.Loading = true;
     });
-    builder.addCase(GetPartyWisePurchOS.rejected, state => {
+    builder.addCase(GetLedgerSummary.rejected, state => {
       state.Loading = false;
     });
-    builder.addCase(GetPartyWisePurchOS.fulfilled, state => {
+    builder.addCase(GetLedgerSummary.fulfilled, state => {
       state.Loading = false;
+    });
+    builder.addCase(GetLedgerFilterData.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetLedgerFilterData.rejected, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetLedgerFilterData.fulfilled, state => {
+      // state.Loading = false;
     });
   },
 });

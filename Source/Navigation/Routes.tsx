@@ -1,18 +1,19 @@
+import {Colors, FontFamily, FontSize, NavigationRoutes} from '@/Constants';
 import React, {useEffect} from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {NavigationContainer} from '@react-navigation/native';
+import {createTable, getDBConnection} from '@/DB/database';
+import {useAppDispatch, useAppSelector} from '@ReduxHook';
+
 import AppStack from './AppStack';
 import AuthStack from './AuthStack';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {Colors, FontFamily, FontSize, NavigationRoutes} from '@/Constants';
-import {useAppDispatch, useAppSelector} from '@ReduxHook';
-import {RNCLoader} from 'Common';
-import {createTable, getDBConnection} from '@/DB/database';
-import {Functions} from '@Utils';
-import {SetIsAuth} from 'Reducers';
-import {ToastProvider} from 'react-native-toast-notifications';
 // import SampleScreen from '../../SampleScreen';
 import BootSplash from 'react-native-bootsplash';
+import {Functions} from '@Utils';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {NavigationContainer} from '@react-navigation/native';
+import {RNCLoader} from 'Common';
+import {SetIsAuth} from 'Reducers';
+import {ToastProvider} from 'react-native-toast-notifications';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,14 @@ const Routes = () => {
   }, []);
 
   const InitData = async () => {
+    // await Functions.setUser({
+    //   compdbname: 'GRCCLMAIN',
+    //   entryName: 'Gauri Creation',
+    //   entryemail: 'dssnvs@gmail.com',
+    //   userpwd: 'g01',
+    //   userrights: 'Owner',
+    // });
+
     const User = await Functions.getUser();
     if (User) {
       dispatch(SetIsAuth(false));

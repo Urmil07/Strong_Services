@@ -1,4 +1,5 @@
 import {Colors, FontFamily, FontSize} from '@/Constants';
+
 import {StyleSheet} from 'react-native';
 import normalize from 'react-native-normalize';
 
@@ -63,17 +64,18 @@ const RNCStyle = StyleSheet.create({
     justifyContent: 'center',
   },
   shadow: {
-    elevation: 4,
-    shadowColor: '#000',
+    elevation: 3,
+    shadowColor: '#171717',
     shadowOpacity: 0.3,
     shadowRadius: 4,
     shadowOffset: {
-      width: 2,
+      width: 0,
       height: 2,
     },
   },
   Btn: {
-    backgroundColor: Colors.btn,
+    // backgroundColor: Colors.btn,
+    backgroundColor: Colors.header,
     borderRadius: 12,
     padding: normalize(13),
     justifyContent: 'center',
