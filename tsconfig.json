@@ -10,6 +10,7 @@
       "Reducers": ["Source/Redux/ExtraReducers"],
       "@Constants": ["./Source/Constants"],
       "@Interfaces": ["./Source/Interfaces"],
+      "@Actions": ["./Source/Actions"],
       "@ReduxHook": ["Source/Utils/Hook/ReduxHook"],
       "App": ["Source/Screens/App"],
       "Auth": ["Source/Screens/Auth"],

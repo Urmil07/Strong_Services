@@ -11,5 +11,9 @@ const Images = {
 
   StrongServices: require(PicPath + 'StrongServices' + png),
   Nodata: require(PicPath + 'Nodata' + png),
+
+  AccountingSystem: require(IconPath + 'accounting-system' + png),
+  Cargo: require(IconPath + 'cargo' + png),
+  Money: require(IconPath + 'money' + png),
 };
 export default Images;

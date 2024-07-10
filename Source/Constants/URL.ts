@@ -9,5 +9,7 @@ const URL = {
   BaseUrl: BASE_URL,
   Estronglogin: 'estronglogin.php',
   EstrongReport: 'estrongreport.php',
+  EstrongUpdatepwd: 'estrongupdatepwd.php',
+  EstrongAccrights: 'estronguaccrights.php',
 };
 export default URL;

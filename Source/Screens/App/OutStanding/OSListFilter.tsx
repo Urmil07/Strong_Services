@@ -1,121 +1,120 @@
-import {Colors, FontFamily, FontSize, isAndroid} from '@Constants';
+import {Colors, FontFamily, FontSize} from '@Constants';
 import {
+  GetCompanys,
   GetFilterData,
-  SetApplyFilter,
-  SetFilterAgent,
-  SetFilterArea,
-  SetFilterBookname,
-  SetFilterCity,
-  SetFilterEndDate,
-  SetFilterStartDate,
-  SetResetFilter,
-} from 'Reducers';
+  GetOSData,
+  ResetAll,
+  setFilterAgent,
+  setFilterArea,
+  setFilterBookname,
+  setFilterCity,
+  setFilterEndDate,
+  setFilterStartDate,
+  setLoading,
+  useReportStore,
+} from '@Actions';
 import {RNCButton, RNCText} from 'Common';
-import React, {useEffect, useState} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  View,
-} from 'react-native';
+import React, {FC, useEffect, useLayoutEffect, useState} from 'react';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import dayjs, {Dayjs} from 'dayjs';
-import {useAppDispatch, useAppSelector} from '@ReduxHook';
 
 import {DatePickerModal} from 'CApp';
 import {DateType} from 'react-native-ui-datepicker';
-import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {MultiSelect} from 'react-native-element-dropdown';
 import {OSListFilterPageProps} from '@/Interfaces/AppStackParamList';
 import {Pressable} from 'react-native';
 import normalize from 'react-native-normalize';
 
-const OSListFilter = ({navigation, route}: OSListFilterPageProps) => {
-  const {type} = route.params;
-  const dispatch = useAppDispatch();
-  const {
-    MastAgent,
-    MastCity,
-    MastArea,
-    MastBookname,
-    FilterCity,
-    FilterAgent,
-    FilterArea,
-    FilterBookname,
-  } = useAppSelector(({DBReducer}) => DBReducer);
+const OSListFilter: FC<OSListFilterPageProps> = ({navigation, route}) => {
+  const {type, ListOrder} = route.params;
 
-  const [selected, setSelected] = useState<string[]>([]);
-  const [StartDate, setStartDate] = useState<Dayjs>();
-  const [EndDate, setEndDate] = useState<Dayjs>();
-  const [DateSelected, setDateSelected] = useState<Dayjs | undefined>();
+  const {
+    MastBookname,
+    FilterBookname,
+    MastAgent,
+    FilterAgent,
+    MastCity,
+    FilterCity,
+    MastArea,
+    FilterArea,
+    FilterStartDate,
+    FilterEndDate,
+  } = useReportStore();
+
+  const [DateSelected, setDateSelected] = useState<Dayjs>(dayjs());
   const [DateType, setDateType] = useState<'start' | 'end'>('start');
   const [DatePickerVisible, setDatePickerVisible] = useState<boolean>(false);
+  const [StartDate, setStartDate] = useState<string>();
+  const [EndDate, setEndDate] = useState<string>();
+  const [City, setCity] = useState<string[]>([]);
+  const [Area, setArea] = useState<string[]>([]);
+  const [Agent, setAgent] = useState<string[]>([]);
+  const [Bookname, setBookname] = useState<string[]>([]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Out Standing Filter',
+    });
+  }, [navigation]);
 
   useEffect(() => {
-    dispatch(GetFilterData({type}));
+    GetFilterData({type});
   }, []);
 
-  // const handleDate = ({date}: {date: DateType}) => {
-  //   console.log('date', date);
-  //   setDateSelected(dayjs(date));
-  //   if (DateType === 'start') {
-  //     dispatch(SetFilterStartDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss')));
-  //     setStartDate(dayjs(date));
-  //   }
-  //   if (DateType === 'end') {
-  //     dispatch(SetFilterEndDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss')));
-  //     setEndDate(dayjs(date));
-  //   }
-  //   setDatePickerVisible(false);
-  // };
+  useEffect(() => {
+    navigation.addListener('blur', () => {
+      GetOSData({type, Orderby: ListOrder});
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
+    });
+  }, [navigation]);
+
+  useEffect(() => {
+    if (FilterStartDate) setStartDate(FilterStartDate);
+    if (FilterEndDate) setStartDate(FilterEndDate);
+    if (FilterCity.length > 0) setCity(FilterCity);
+    if (FilterAgent.length > 0) setAgent(FilterAgent);
+    if (FilterArea.length > 0) setArea(FilterArea);
+    if (FilterBookname.length > 0) setBookname(FilterBookname);
+  }, []);
+
+  const handleDate = ({date}: {date: DateType}) => {
+    setDateSelected(dayjs(date));
+    if (DateType === 'start')
+      setStartDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss'));
+    // setFilterStartDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss'));
+
+    if (DateType === 'end')
+      // setFilterEndDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss'));
+      setEndDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss'));
+
+    setDatePickerVisible(false);
+  };
+
+  const handleApply = () => {
+    setLoading(true);
+
+    setFilterStartDate(StartDate);
+    setFilterEndDate(EndDate);
+    setFilterCity(City);
+    setFilterAgent(Agent);
+    setFilterArea(Area);
+    setFilterBookname(Bookname);
+
+    // navigation.replace('OSListScreen', {type});
+    navigation.goBack();
+  };
 
   return (
     <View style={{flex: 1}}>
-      <StatusBar backgroundColor={Colors.header} />
-      <SafeAreaView style={{backgroundColor: Colors.header}} />
-      {/* <DatePickerModal
+      <DatePickerModal
         visible={DatePickerVisible}
         handleChange={handleDate}
         value={DateSelected}
         setVisible={setDatePickerVisible}
-      /> */}
-
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: Colors.header,
-          paddingVertical: isAndroid ? normalize(17) : normalize(8),
-        }}>
-        <View
-          style={{
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'row',
-            gap: 10,
-            left: normalize(15),
-          }}>
-          <Pressable
-            style={{
-              padding: normalize(10),
-              borderRadius: 100,
-            }}
-            onPress={() => navigation.goBack()}>
-            <FontAwesome6Icon
-              name="chevron-left"
-              size={normalize(20)}
-              color={Colors.White}
-            />
-          </Pressable>
-          <RNCText
-            family={FontFamily.SemiBold}
-            size={FontSize.font18}
-            color={Colors.WText}>
-            Filter
-          </RNCText>
-        </View>
-      </View>
+      />
 
       <View
         style={{
@@ -127,51 +126,55 @@ const OSListFilter = ({navigation, route}: OSListFilterPageProps) => {
           bounces={false}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{gap: 5}}>
-          {/* <View style={{flexDirection: 'column', gap: 10}}> */}
-          {/* <View style={styles.DateContainer}>
-            <RNCText family={FontFamily.Bold} style={{left: normalize(10)}}>
-              From Date:
-            </RNCText>
+          <View style={{gap: 5}}>
+            <RNCText style={styles.title}>Start Date</RNCText>
             <Pressable
               style={styles.dateInput}
               onPress={() => {
-                setDateSelected(StartDate);
+                setDateSelected(dayjs(StartDate));
                 setDateType('start');
                 setDatePickerVisible(true);
               }}>
-              <RNCText>
-                {StartDate ? StartDate?.format('DD/MM/YYYY') : '--/--/----'}
+              <RNCText size={FontSize.font13}>
+                {StartDate
+                  ? dayjs(StartDate)?.format('DD/MM/YYYY')
+                  : '-- / -- / ----'}
+                {/* {FilterStartDate
+                  ? dayjs(FilterStartDate)?.format('DD/MM/YYYY')
+                  : '-- / -- / ----'} */}
               </RNCText>
               <Ionicons
                 name="calendar"
-                size={normalize(30)}
+                size={normalize(22)}
                 color={Colors.Black}
               />
             </Pressable>
           </View>
 
-          <View style={styles.DateContainer}>
-            <RNCText family={FontFamily.Bold} style={{left: normalize(10)}}>
-              To Date:
-            </RNCText>
+          <View style={{gap: 5}}>
+            <RNCText style={styles.title}>End Date</RNCText>
             <Pressable
               style={styles.dateInput}
               onPress={() => {
-                setDateSelected(EndDate);
+                setDateSelected(dayjs(EndDate));
                 setDateType('end');
                 setDatePickerVisible(true);
               }}>
-              <RNCText>
-                {EndDate ? EndDate?.format('DD/MM/YYYY') : '--/--/----'}
+              <RNCText size={FontSize.font13}>
+                {EndDate
+                  ? dayjs(EndDate)?.format('DD/MM/YYYY')
+                  : ' -- / -- / ----'}
+                {/* {FilterEndDate
+                  ? dayjs(FilterEndDate)?.format('DD/MM/YYYY')
+                  : ' -- / -- / ----'} */}
               </RNCText>
               <Ionicons
                 name="calendar"
-                size={normalize(30)}
+                size={normalize(22)}
                 color={Colors.Black}
               />
             </Pressable>
-          </View> */}
-          {/* </View> */}
+          </View>
 
           <View style={{gap: 5}}>
             <RNCText family={FontFamily.Bold} style={{left: normalize(10)}}>
@@ -190,10 +193,10 @@ const OSListFilter = ({navigation, route}: OSListFilterPageProps) => {
               valueField="value"
               placeholder="Select City..."
               searchPlaceholder="Search..."
-              value={FilterCity}
-              onChange={item => {
-                dispatch(SetFilterCity(item));
-              }}
+              // value={FilterCity}
+              // onChange={item => setFilterCity(item)}
+              value={City}
+              onChange={item => setCity(item)}
               selectedStyle={styles.selectedStyle}
               activeColor={Colors.LightBlue}
               itemTextStyle={styles.itemTextStyle}
@@ -218,10 +221,10 @@ const OSListFilter = ({navigation, route}: OSListFilterPageProps) => {
               valueField="value"
               placeholder="Select Area..."
               searchPlaceholder="Search..."
-              value={FilterArea}
-              onChange={item => {
-                dispatch(SetFilterArea(item));
-              }}
+              // value={FilterArea}
+              // onChange={item => setFilterArea(item)}
+              value={Area}
+              onChange={item => setArea(item)}
               selectedStyle={styles.selectedStyle}
               activeColor={Colors.LightBlue}
               itemTextStyle={styles.itemTextStyle}
@@ -246,10 +249,10 @@ const OSListFilter = ({navigation, route}: OSListFilterPageProps) => {
               valueField="value"
               placeholder="Select Agent..."
               searchPlaceholder="Search..."
-              value={FilterAgent}
-              onChange={item => {
-                dispatch(SetFilterAgent(item));
-              }}
+              // value={FilterAgent}
+              // onChange={item => setFilterAgent(item)}
+              value={Agent}
+              onChange={item => setAgent(item)}
               selectedStyle={styles.selectedStyle}
               activeColor={Colors.LightBlue}
               itemTextStyle={styles.itemTextStyle}
@@ -274,10 +277,8 @@ const OSListFilter = ({navigation, route}: OSListFilterPageProps) => {
               valueField="value"
               placeholder="Select Bookname..."
               searchPlaceholder="Search..."
-              value={FilterBookname}
-              onChange={item => {
-                dispatch(SetFilterBookname(item));
-              }}
+              value={Bookname}
+              onChange={item => setBookname(item)}
               selectedStyle={styles.selectedStyle}
               activeColor={Colors.LightBlue}
               itemTextStyle={styles.itemTextStyle}
@@ -306,18 +307,14 @@ const OSListFilter = ({navigation, route}: OSListFilterPageProps) => {
           }}
           btnTextStyle={{color: Colors.Black}}
           onPress={() => {
-            dispatch(SetResetFilter(true));
+            setLoading(true);
+            ResetAll();
+            GetCompanys({type});
             navigation.goBack();
+            // navigation.replace('OSListScreen', {type});
           }}
         />
-        <RNCButton
-          name={'Apply'}
-          style={{flex: 1}}
-          onPress={() => {
-            dispatch(SetApplyFilter(true));
-            navigation.goBack();
-          }}
-        />
+        <RNCButton name={'Apply'} style={{flex: 1}} onPress={handleApply} />
       </View>
       <SafeAreaView />
     </View>
@@ -328,9 +325,10 @@ export default OSListFilter;
 
 const styles = StyleSheet.create({
   dropdown: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: 12,
-    padding: normalize(10),
+    borderRadius: 5,
+    paddingHorizontal: normalize(8),
+    borderColor: Colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   containerStyle: {
     borderRadius: 8,
@@ -377,4 +375,8 @@ const styles = StyleSheet.create({
   },
   DateTitle: {left: normalize(8)},
   DateContainer: {flex: 1, gap: 5},
+  title: {
+    fontFamily: FontFamily.SemiBold,
+    left: normalize(10),
+  },
 });

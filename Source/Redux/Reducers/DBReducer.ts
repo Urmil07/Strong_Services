@@ -1,3 +1,4 @@
+import { AccLedgerInterfase, LedgerDataInterfase, OSInterfase } from '@/Interfaces/DBReducerInterFace';
 import {Datapurco, Datasaleo} from '@/Interfaces/ReportInterface';
 import {Functions, setDate} from '@Utils';
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
@@ -6,6 +7,8 @@ import dayjs, {Dayjs} from 'dayjs';
 import {getDBConnection} from '@/DB/database';
 
 interface DBInitInterface {
+  MastColdList: [];
+  FilterColdList: [];
   MastList: OSInterfase[];
   FilterList: OSInterfase[];
   PartyWiseOS: Datasaleo[] | Datapurco[];
@@ -261,7 +264,7 @@ export const GetLedger = createAsyncThunk(
         ? '*'
         : 'ledgerid, compid, accid, party, crdr, balamt, cityname';
 
-      let query = `SELECT ${ExtractData} FROM ledgermst WHERE ldate >= '${StartDate}' AND ldate <= '${EndDate}'`;
+      let query = `SELECT ${ExtractData} FROM ledger WHERE ldate >= '${StartDate}' AND ldate <= '${EndDate}'`;
 
       if (
         State?.DBReducer?.FilterCity &&
@@ -389,7 +392,7 @@ export const GetLedgerSummary = createAsyncThunk(
       const StartDate = State?.DBReducer?.FilterStartDate ?? Date.StartDate;
       const EndDate = State?.DBReducer?.FilterEndDate ?? Date.EndDate;
 
-      let query = `SELECT monthname,dramt,cramt,crdr,balamt FROM ledgermst WHERE invdate >= '${StartDate}' AND invdate <= '${EndDate}' GROUP BY monthname,dramt,cramt,crdr,balamt`;
+      let query = `SELECT monthname,dramt,cramt,crdr,balamt FROM ledger WHERE invdate >= '${StartDate}' AND invdate <= '${EndDate}' GROUP BY monthname,dramt,cramt,crdr,balamt`;
 
       const SummaryDataSql = await db.executeSql(query);
       console.log('SummaryDataSql', SummaryDataSql);
@@ -419,15 +422,15 @@ export const GetPartyWiseLedger = createAsyncThunk(
       //             ldate, account, round(dramt, 2) AS dramt, round(cramt, 2) AS cramt,
       //             round(balamt, 2) AS balamt,
       //             crdr, narration, remarks, cheque, cityname, agentName, subschedule, monthname
-      //             FROM ledgermst
-      //             LEFT JOIN compmst ON compmst.compid = ledgermst.compid
-      //             WHERE ledgermst.entryemail = '${User.entryemail}'
+      //             FROM ledger
+      //             LEFT JOIN compmst ON compmst.compid = ledger.compid
+      //             WHERE ledger.entryemail = '${User.entryemail}'
       //             AND compmst.compid=${CompID}
       //             `;
-      let query = `SELECT CASE WHEN account = 'OPENING AMOUNT' THEN 'AA' ELSE '' END AS op, ledgermst.* FROM ledgermst LEFT JOIN compmst ON compmst.compid=ledgermst.compid WHERE ledgermst.entryemail='${User.entryemail}' AND compmst.compid=${CompID} `;
+      let query = `SELECT CASE WHEN account = 'OPENING AMOUNT' THEN 'AA' ELSE '' END AS op, ledger.* FROM ledger LEFT JOIN compmst ON compmst.compid=ledger.compid WHERE ledger.entryemail='${User.entryemail}' AND compmst.compid=${CompID} `;
 
       if (accid) {
-        query += ` AND ledgermst.accid=${accid}`;
+        query += ` AND ledger.accid=${accid}`;
       }
 
       if (
@@ -448,7 +451,7 @@ export const GetPartyWiseLedger = createAsyncThunk(
         ).join(',')})`;
       }
 
-      query += ` AND ledgermst.ldate >= '${StartDate}' AND ledgermst.ldate <= '${EndDate}' AND ledgermst.party IN ('${party}') ORDER BY ledgerid, date(ldate), op ASC;`;
+      query += ` AND ledger.ldate >= '${StartDate}' AND ledger.ldate <= '${EndDate}' AND ledger.party IN ('${party}') ORDER BY ledgerid, date(ldate), op ASC;`;
 
       console.log('GetPartyWiseLedger query', query);
 
@@ -459,6 +462,36 @@ export const GetPartyWiseLedger = createAsyncThunk(
       thunkAPI.dispatch(SetPartyWiseLedger(LedgerData));
       resolve();
     });
+  },
+);
+
+interface GetColdListProp {
+  type: 'lot' | 'account';
+}
+export const GetColdList = createAsyncThunk(
+  'GetColdList',
+  async ({type}: GetColdListProp, thunkAPI) => {
+    const State: any = thunkAPI.getState();
+    const DBState: DBInitInterface = State?.DBReducer;
+    const db = await getDBConnection();
+    const User = await Functions.getUser();
+
+    let query = `SELECT coldmst.coldid, coldmst.compid, coldmst.accid, coldmst.delparty, coldmst.SerialDt, coldmst.lotno, coldmst.accname FROM coldmst LEFT JOIN compmst ON compmst.compid = coldmst.compid where coldmst.entryemail='${User.entryemail}' `;
+    console.log(' query type', type);
+    if (type === 'lot') {
+      query += ` GROUP BY lotno`;
+    } else {
+      query += ` GROUP BY accname`;
+    }
+
+    query += ` ORDER BY SerialDt`;
+
+    console.log('query', query);
+
+    const ColdDataSql = await db.executeSql(query);
+    const ColdData = ColdDataSql[0].rows.raw();
+    thunkAPI.dispatch(SetColdList(ColdData));
+    console.log('ColdData', ColdData);
   },
 );
 
@@ -589,19 +622,19 @@ export const GetLedgerFilterData = createAsyncThunk(
   async () => {
     return new Promise<GetLedgerFilterDataProps>(async (resolve, reject) => {
       const db = await getDBConnection();
-      let Cityquery = `SELECT cityname FROM ledgermst GROUP BY cityname ORDER BY cityname`;
+      let Cityquery = `SELECT cityname FROM ledger GROUP BY cityname ORDER BY cityname`;
       const CityDataSql = await db.executeSql(Cityquery);
       const CityData = CityDataSql[0].rows.raw();
 
-      let Agentquery = `SELECT agentName FROM ledgermst GROUP BY agentName`;
+      let Agentquery = `SELECT agentName FROM ledger GROUP BY agentName`;
       const AgentDataSql = await db.executeSql(Agentquery);
       const AgentData = AgentDataSql[0].rows.raw();
 
-      let subscheduleQuery = `SELECT subschedule FROM ledgermst GROUP BY subschedule ORDER BY subschedule`;
+      let subscheduleQuery = `SELECT subschedule FROM ledger GROUP BY subschedule ORDER BY subschedule`;
       const subscheduleQuerySql = await db.executeSql(subscheduleQuery);
       const subscheduleData = subscheduleQuerySql[0].rows.raw();
 
-      let monthNameQuery = `SELECT monthname FROM ledgermst GROUP BY monthname ORDER BY  CASE 
+      let monthNameQuery = `SELECT monthname FROM ledger GROUP BY monthname ORDER BY  CASE 
         WHEN monthname = 'January' THEN 1
         WHEN monthname = 'February' THEN 2
         WHEN monthname = 'March' THEN 3
@@ -618,7 +651,7 @@ export const GetLedgerFilterData = createAsyncThunk(
       const monthNameQuerySql = await db.executeSql(monthNameQuery);
       const monthNameData = monthNameQuerySql[0].rows.raw();
 
-      let companyQuery = `SELECT compmst.compid,compmst.compname, compmst.compyearname FROM ledgermst LEFT JOIN compmst WHERE compmst.compid=ledgermst.compid GROUP BY ledgermst.compid ORDER BY compmst.compid`;
+      let companyQuery = `SELECT compmst.compid,compmst.compname, compmst.compyearname FROM ledger LEFT JOIN compmst WHERE compmst.compid=ledger.compid GROUP BY ledger.compid ORDER BY compmst.compid`;
       const companyQuerySql = await db.executeSql(companyQuery);
       const companyData = companyQuerySql[0].rows.raw();
 
@@ -650,6 +683,8 @@ export const GetLedgerFilterData = createAsyncThunk(
 );
 
 const initialState: DBInitInterface = {
+  MastColdList: [],
+  FilterColdList: [],
   MastList: [],
   FilterList: [],
   PartyWiseOS: [],
@@ -764,6 +799,13 @@ const DBReducer = createSlice({
       });
       console.log('state.FilterCompany', state.FilterCompany);
     },
+    SetColdList: (state, {payload}) => {
+      state.MastColdList = payload;
+      state.FilterColdList = payload;
+    },
+    SetFilterColdList: (state, {payload}) => {
+      state.FilterColdList = payload;
+    },
   },
   extraReducers(builder) {
     builder.addCase(GetCompanys.fulfilled, (state, {payload}) => {
@@ -801,6 +843,7 @@ const DBReducer = createSlice({
       state.MasterMonth = MasterMonth;
       state.MasterSubschedule = MasterSubschedule;
     });
+    builder.addCase(GetColdList.fulfilled, (state, {payload}) => {});
   },
 });
 
@@ -824,6 +867,8 @@ export const {
   SetFilterSubschedule,
   SetFilterLedgerComp,
   SetOSCompny,
+  SetColdList,
+  SetFilterColdList,
 } = DBReducer.actions;
 
 export default DBReducer.reducer;

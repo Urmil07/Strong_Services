@@ -1,4 +1,5 @@
 import RNCButton from './RNCButton';
+import RNCDrawerView from './RNCDrawerView';
 import RNCDropdown from './RNCDropdown';
 import RNCFormDropDown from './Form/RNCFormDropDown';
 import RNCLoader from './RNCLoader';
@@ -20,4 +21,5 @@ export {
   RNCToast,
   RNCFormDropDown,
   RNCNodata,
+  RNCDrawerView,
 };

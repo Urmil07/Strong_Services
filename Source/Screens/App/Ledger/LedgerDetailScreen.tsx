@@ -1,57 +1,66 @@
-import {Colors, FontFamily, FontSize, isAndroid} from '@Constants';
+import {Colors, FontFamily, FontSize} from '@Constants';
+import {FlatList, Pressable, StyleSheet, View} from 'react-native';
 import {
-  FlatList,
-  Pressable,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  View,
-} from 'react-native';
-import {GetLedger, GetPartyWiseLedger, SetFilterLedgerComp} from 'Reducers';
+  GetPartyWiseLedger,
+  setFilterLedgerComp,
+  useReportStore,
+} from '@Actions';
 import {RNCDropdown, RNCNodata, RNCText} from 'Common';
-import React, {useEffect, useState} from 'react';
-import {useAppDispatch, useAppSelector} from '@ReduxHook';
+import React, {FC, useEffect, useLayoutEffect, useState} from 'react';
 
-import {Dataledger} from '@/Interfaces/ReportInterface';
-import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
+import {LedgerDataInterfase} from '@/Interfaces/DBReducerInterFace';
 import {LedgerDetailScreenPageProps} from '@/Interfaces/AppStackParamList';
 import {LedgerView} from 'CApp';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Zocial from 'react-native-vector-icons/Zocial';
 import normalize from 'react-native-normalize';
 
-const LedgerDetailScreen = ({
+const LedgerDetailScreen: FC<LedgerDetailScreenPageProps> = ({
   navigation,
   route,
-}: LedgerDetailScreenPageProps) => {
-  const dispatch = useAppDispatch();
+}) => {
   const {accid, compid, partyName} = route.params;
-  const {PartyWiseLedger, MastCompany} = useAppSelector(
-    ({DBReducer}) => DBReducer,
-  );
+
+  const {PartyWiseLedger} = useReportStore();
+
+  const {MastCompany} = useReportStore();
   const [OpenBal, setOpenBal] = useState<number>(0);
   const [OpenDebit, setOpenDebit] = useState<number>(0);
   const [OpenCredit, setOpenCredit] = useState<number>(0);
-
   const [SelectedCompny, setSelectedCompny] = useState('');
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Account Ledger',
+      headerRight(props) {
+        return (
+          <Pressable onPress={() => null}>
+            <MaterialCommunityIcons
+              name="microsoft-excel"
+              size={normalize(24)}
+              color={Colors.WText}
+            />
+          </Pressable>
+        );
+      },
+    });
+  }, [navigation]);
 
   useEffect(() => {
     if (MastCompany.length > 0) {
       setSelectedCompny(MastCompany[0]?.value);
-      dispatch(SetFilterLedgerComp(MastCompany[0]?.value));
+      setFilterLedgerComp(MastCompany[0]?.value);
     }
   }, [MastCompany]);
 
   useEffect(() => {
     // dispatch(GetLedger({id: compid}));
     if (SelectedCompny)
-      dispatch(
-        GetPartyWiseLedger({
-          party: partyName,
-          accid: '',
-          CompID: SelectedCompny!,
-        }),
-      );
+      GetPartyWiseLedger({
+        party: partyName,
+        accid: '',
+        CompID: SelectedCompny!,
+      });
   }, [SelectedCompny]);
 
   useEffect(() => {
@@ -86,276 +95,235 @@ const LedgerDetailScreen = ({
   const ClosingBal = Math.abs(CreditTotal - DebitTotal);
 
   return (
-    <View style={{flex: 1}}>
-      <SafeAreaView style={{backgroundColor: Colors.header}} />
-      <StatusBar backgroundColor={Colors.header} />
-
+    <View
+      style={{
+        flex: 1,
+        padding: normalize(10),
+        gap: 5,
+      }}>
       <View
         style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          backgroundColor: Colors.header,
-          paddingVertical: isAndroid ? normalize(10) : 0,
+          backgroundColor: Colors.backgroundSecondary + 80,
+          padding: normalize(5),
+          borderRadius: 4,
         }}>
+        <RNCText family={FontFamily.Bold} size={FontSize.font12}>
+          {partyName}
+        </RNCText>
         <View
           style={{
-            alignItems: 'center',
             flexDirection: 'row',
-            gap: 10,
-            left: normalize(15),
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
           }}>
           <Pressable
-            style={{padding: normalize(10), borderRadius: 100}}
-            onPress={() => navigation.goBack()}>
-            <FontAwesome6Icon
-              name="chevron-left"
-              size={normalize(20)}
-              color={Colors.WText}
-            />
+            style={{
+              flexDirection: 'row',
+              gap: 5,
+              alignItems: 'center',
+              flex: 1,
+            }}>
+            <Zocial name="call" size={normalize(18)} color={Colors.Black} />
+            <RNCText size={FontSize.font13}>{}</RNCText>
           </Pressable>
-          <RNCText
-            family={FontFamily.SemiBold}
-            size={FontSize.font18}
-            color={Colors.WText}>
-            Account Ledger
-          </RNCText>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 5,
+              alignItems: 'center',
+              flex: 1,
+            }}>
+            <MaterialCommunityIcons
+              name="home-city"
+              size={normalize(18)}
+              color={Colors.Black}
+            />
+            <RNCText size={FontSize.font13}>{}</RNCText>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 5,
+              alignItems: 'center',
+              flex: 1,
+            }}>
+            <MaterialCommunityIcons
+              name="home-city"
+              size={normalize(18)}
+              color={Colors.Black}
+            />
+            <RNCText size={FontSize.font13}>{}</RNCText>
+          </View>
         </View>
-        <View />
+      </View>
+
+      <View>
+        <RNCDropdown
+          Data={MastCompany}
+          value={SelectedCompny!}
+          dropdownstyle={{
+            paddingVertical: normalize(0),
+            backgroundColor: Colors.header,
+          }}
+          selectedtextstyle={{fontSize: FontSize.font12, color: Colors.WText}}
+          itemtextstyle={{fontSize: FontSize.font12}}
+          iconstyle={{}}
+          placeholderText={'Select Company...'}
+          iconColor={Colors.WText}
+          onChange={item => {
+            setSelectedCompny(item.value);
+          }}
+        />
       </View>
 
       <View
         style={{
-          flex: 1,
-          padding: normalize(10),
-          gap: 5,
+          backgroundColor: Colors.backgroundSecondary + 80,
+          padding: normalize(5),
+          borderRadius: 4,
         }}>
-        <View
-          style={{
-            backgroundColor: Colors.backgroundSecondary + 80,
-            padding: normalize(5),
-            borderRadius: 4,
-          }}>
-          <RNCText family={FontFamily.Bold} size={FontSize.font12}>
-            {partyName}
-          </RNCText>
+        <View style={{flexDirection: 'row'}}>
+          <View style={{width: '35%'}}>
+            <RNCText family={FontFamily.Black} size={FontSize.font12}>
+              Opening Bal.
+            </RNCText>
+          </View>
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
+              width: '32.5%',
+              justifyContent: 'center',
+              alignItems: 'flex-end',
             }}>
-            <Pressable
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-                alignItems: 'center',
-                flex: 1,
-              }}>
-              <Zocial name="call" size={normalize(18)} color={Colors.Black} />
-              <RNCText size={FontSize.font13}>{}</RNCText>
-            </Pressable>
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-                alignItems: 'center',
-                flex: 1,
-              }}>
-              <MaterialCommunityIcons
-                name="home-city"
-                size={normalize(18)}
-                color={Colors.Black}
-              />
-              <RNCText size={FontSize.font13}>{}</RNCText>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-                alignItems: 'center',
-                flex: 1,
-              }}>
-              <MaterialCommunityIcons
-                name="home-city"
-                size={normalize(18)}
-                color={Colors.Black}
-              />
-              <RNCText size={FontSize.font13}>{}</RNCText>
-            </View>
-          </View>
-        </View>
-
-        <View>
-          <RNCDropdown
-            Data={MastCompany}
-            value={SelectedCompny!}
-            dropdownstyle={{
-              paddingVertical: normalize(0),
-              backgroundColor: Colors.header,
-            }}
-            selectedtextstyle={{fontSize: FontSize.font12, color: Colors.WText}}
-            itemtextstyle={{fontSize: FontSize.font12}}
-            iconstyle={{}}
-            placeholderText={'Select Company...'}
-            iconColor={Colors.WText}
-            onChange={item => {
-              setSelectedCompny(item.value);
-            }}
-          />
-        </View>
-
-        <View
-          style={{
-            backgroundColor: Colors.backgroundSecondary + 80,
-            padding: normalize(5),
-            borderRadius: 4,
-          }}>
-          <View style={{flexDirection: 'row'}}>
-            <View style={{width: '35%'}}>
-              <RNCText family={FontFamily.Black} size={FontSize.font12}>
-                Opening Bal.
-              </RNCText>
-            </View>
-            <View
-              style={{
-                width: '32.5%',
-                justifyContent: 'center',
-                alignItems: 'flex-end',
-              }}>
-              <RNCText
-                family={FontFamily.Black}
-                size={FontSize.font12}
-                color={Colors.Danger}>
-                Debit
-              </RNCText>
-            </View>
-            <View
-              style={{
-                width: '32.5%',
-                alignItems: 'flex-end',
-                justifyContent: 'center',
-              }}>
-              <RNCText
-                family={FontFamily.Black}
-                size={FontSize.font12}
-                color={Colors.EAGreen}>
-                Credit
-              </RNCText>
-            </View>
-          </View>
-          <View style={{flexDirection: 'row'}}>
-            <View style={{width: '35%'}}>
-              <RNCText size={FontSize.font12} family={FontFamily.SemiBold}>
-                {format(OpenBal)}
-              </RNCText>
-            </View>
-            <View
-              style={{
-                width: '32.5%',
-                justifyContent: 'center',
-                alignItems: 'flex-end',
-              }}>
-              <RNCText
-                family={FontFamily.Bold}
-                size={FontSize.font12}
-                color={Colors.Danger}>
-                {format(OpenDebit)}
-              </RNCText>
-            </View>
-            <View
-              style={{
-                width: '32.5%',
-                alignItems: 'flex-end',
-                justifyContent: 'center',
-              }}>
-              <RNCText
-                family={FontFamily.Bold}
-                size={FontSize.font12}
-                color={Colors.EAGreen}>
-                {format(OpenCredit)}
-              </RNCText>
-            </View>
-          </View>
-        </View>
-
-        <FlatList
-          data={
-            PartyWiseLedger.filter(
-              ledger => ledger.op == '',
-            ) as LedgerDataInterfase[]
-          }
-          showsVerticalScrollIndicator={false}
-          renderItem={({item, index}) => {
-            return (
-              <LedgerView
-                index={index}
-                item={item}
-                separators={{
-                  highlight: () => {},
-                  unhighlight: () => {},
-                  updateProps: (
-                    select: 'leading' | 'trailing',
-                    newProps: any,
-                  ) => {},
-                }}
-              />
-            );
-          }}
-          contentContainerStyle={{gap: 5}}
-          style={{marginBottom: normalize(5), flex: 1}}
-          ListEmptyComponent={RNCNodata}
-        />
-
-        <View
-          style={{
-            backgroundColor: Colors.White + 40,
-            padding: normalize(10),
-            borderRadius: 8,
-            marginBottom: normalize(10),
-            gap: 3,
-          }}>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <RNCText family={FontFamily.SemiBold} size={FontSize.font11}>
-              Debit Total :{'  '}
-              <RNCText
-                family={FontFamily.Bold}
-                size={FontSize.font12}
-                color={Colors.E855555}>
-                {format(DebitTotal)}
-              </RNCText>
-            </RNCText>
-            <RNCText family={FontFamily.SemiBold} size={FontSize.font11}>
-              Credit Total :{'  '}
-              <RNCText
-                family={FontFamily.Bold}
-                size={FontSize.font12}
-                color={Colors.EAGreen}>
-                {format(CreditTotal)}
-              </RNCText>
+            <RNCText
+              family={FontFamily.Black}
+              size={FontSize.font12}
+              color={Colors.Danger}>
+              Debit
             </RNCText>
           </View>
+          <View
+            style={{
+              width: '32.5%',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+            }}>
+            <RNCText
+              family={FontFamily.Black}
+              size={FontSize.font12}
+              color={Colors.EAGreen}>
+              Credit
+            </RNCText>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row'}}>
+          <View style={{width: '35%'}}>
+            <RNCText size={FontSize.font12} family={FontFamily.SemiBold}>
+              {format(OpenBal)}
+            </RNCText>
+          </View>
+          <View
+            style={{
+              width: '32.5%',
+              justifyContent: 'center',
+              alignItems: 'flex-end',
+            }}>
+            <RNCText
+              family={FontFamily.Bold}
+              size={FontSize.font12}
+              color={Colors.Danger}>
+              {format(OpenDebit)}
+            </RNCText>
+          </View>
+          <View
+            style={{
+              width: '32.5%',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+            }}>
+            <RNCText
+              family={FontFamily.Bold}
+              size={FontSize.font12}
+              color={Colors.EAGreen}>
+              {format(OpenCredit)}
+            </RNCText>
+          </View>
+        </View>
+      </View>
 
-          <View style={{flexDirection: 'row'}}>
-            <View style={{width: '60%'}}>
-              <RNCText family={FontFamily.Bold}>Closing Balance</RNCText>
-            </View>
-            <View
-              style={{
-                width: '40%',
-                justifyContent: 'center',
-                alignItems: 'flex-end',
-              }}>
-              <RNCText
-                family={FontFamily.Bold}
-                color={
-                  CreditTotal > DebitTotal ? Colors.EAGreen : Colors.E855555
-                }>
-                {`${format(ClosingBal)} ${
-                  CreditTotal > DebitTotal ? 'Cr' : 'Dr'
-                }`}
-              </RNCText>
-            </View>
+      <FlatList
+        data={
+          PartyWiseLedger.filter(
+            ledger => ledger.op == '',
+          ) as LedgerDataInterfase[]
+        }
+        showsVerticalScrollIndicator={false}
+        renderItem={({item, index}) => {
+          return (
+            <LedgerView
+              index={index}
+              item={item}
+              separators={{
+                highlight: () => {},
+                unhighlight: () => {},
+                updateProps: (
+                  select: 'leading' | 'trailing',
+                  newProps: any,
+                ) => {},
+              }}
+            />
+          );
+        }}
+        contentContainerStyle={{gap: 5}}
+        style={{marginBottom: normalize(5), flex: 1}}
+        ListEmptyComponent={RNCNodata}
+      />
+
+      <View
+        style={{
+          backgroundColor: Colors.White + 40,
+          padding: normalize(10),
+          borderRadius: 8,
+          marginBottom: normalize(10),
+          gap: 3,
+        }}>
+        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+          <RNCText family={FontFamily.SemiBold} size={FontSize.font11}>
+            Debit Total :{'  '}
+            <RNCText
+              family={FontFamily.Bold}
+              size={FontSize.font12}
+              color={Colors.E85555}>
+              {format(DebitTotal)}
+            </RNCText>
+          </RNCText>
+          <RNCText family={FontFamily.SemiBold} size={FontSize.font11}>
+            Credit Total :{'  '}
+            <RNCText
+              family={FontFamily.Bold}
+              size={FontSize.font12}
+              color={Colors.EAGreen}>
+              {format(CreditTotal)}
+            </RNCText>
+          </RNCText>
+        </View>
+
+        <View style={{flexDirection: 'row'}}>
+          <View style={{width: '60%'}}>
+            <RNCText family={FontFamily.Bold}>Closing Balance</RNCText>
+          </View>
+          <View
+            style={{
+              width: '40%',
+              justifyContent: 'center',
+              alignItems: 'flex-end',
+            }}>
+            <RNCText
+              family={FontFamily.Bold}
+              color={CreditTotal > DebitTotal ? Colors.EAGreen : Colors.E85555}>
+              {`${format(ClosingBal)} ${
+                CreditTotal > DebitTotal ? 'Cr' : 'Dr'
+              }`}
+            </RNCText>
           </View>
         </View>
       </View>

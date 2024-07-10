@@ -1,4 +1,4 @@
-interface OSInterfase {
+export interface OSInterfase {
   totalbill: string;
   cityname: string;
   areaname: string;
@@ -9,7 +9,7 @@ interface OSInterfase {
   mobile: string;
 }
 
-interface AccLedgerInterfase {
+export interface AccLedgerInterfase {
   ledgerid: string;
   compid: string;
   crdr: string;
@@ -20,7 +20,7 @@ interface AccLedgerInterfase {
   totalbal: string;
 }
 
-interface SaleOSDataInterfase {
+export interface SaleOSDataInterfase {
   accid: string;
   accname?: any;
   agentid: string;
@@ -45,7 +45,7 @@ interface SaleOSDataInterfase {
   runbalamt: string;
 }
 
-interface LedgerDataInterfase {
+export interface LedgerDataInterfase {
   accid: number; // x
   account: string; // x
   agentName: string;
@@ -68,4 +68,13 @@ interface LedgerDataInterfase {
   subschedule: string;
   compcode: string;
   op: string;
+}
+
+export interface StockListProp {
+  accname: string;
+  totalBalQty: number;
+  totalBalWeight: number;
+  accid: number;
+  compid: number;
+  compname: string;
 }

@@ -6,6 +6,7 @@ const Colors = {
   background: '#e6f7ff',
   btn: '#006494',
   btnDisable: '#004D74',
+  inpDisable:'#D9EAE5',
   // card: '#005580',
   card: '#00344E',
   // card: '#0E374E',
@@ -29,7 +30,7 @@ const Colors = {
   Text: '#232525',
   WText: '#ffffff',
   Loader: '#232525',
-
+  E85555: '#E85555',
   Green: '#00FF00',
   Red: '#F00000',
   Blue: '#0000FF',

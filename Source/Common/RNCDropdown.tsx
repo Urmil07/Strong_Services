@@ -2,6 +2,7 @@ import {Colors, FontFamily, FontSize} from '@Constants';
 import {ImageStyle, StyleSheet, TextStyle, View, ViewStyle} from 'react-native';
 
 import {Dropdown} from 'react-native-element-dropdown';
+import RNCText from './RNCText';
 import React from 'react';
 import normalize from 'react-native-normalize';
 
@@ -18,11 +19,14 @@ export interface DropDownProps {
   placeholderstyle?: TextStyle;
   selectedtextstyle?: TextStyle;
   itemtextstyle?: TextStyle;
-  inputsearchstyle?: ViewStyle;
+  inputsearchstyle?: ViewStyle & TextStyle;
   containerstyle?: ViewStyle;
   iconstyle?: ImageStyle;
   search?: boolean;
+  disable?: boolean;
   iconColor?: string;
+  titleStyle?: TextStyle;
+  title?: string;
 }
 
 const RNCDropdown = (prop: DropDownProps) => {
@@ -43,11 +47,16 @@ const RNCDropdown = (prop: DropDownProps) => {
     search,
     containerstyle,
     itemtextstyle,
+    title,
+    titleStyle,
+    disable,
     ...restProps
   } = prop;
 
   return (
     <View style={[styles.container, style]}>
+      {title && <RNCText style={[styles.title, titleStyle]}>{title}</RNCText>}
+
       <Dropdown
         activeColor={activeColor ?? Colors.LightBlue}
         style={[styles.dropdown, dropdownstyle]}
@@ -65,6 +74,7 @@ const RNCDropdown = (prop: DropDownProps) => {
         searchPlaceholder={searchPlaceholderText}
         value={value}
         onChange={onChange}
+        disable={disable}
         itemTextStyle={[styles.itemTextStyle, itemtextstyle]}
         // fontFamily={FontFamily.Medium}
         {...restProps}
@@ -76,7 +86,7 @@ const RNCDropdown = (prop: DropDownProps) => {
 export default RNCDropdown;
 
 const styles = StyleSheet.create({
-  container: {},
+  container: {gap: 8},
   dropdown: {
     padding: normalize(10),
     backgroundColor: Colors.backgroundSecondary,
@@ -109,5 +119,10 @@ const styles = StyleSheet.create({
   },
   itemTextStyle: {
     color: Colors.Black,
+  },
+  title: {
+    fontSize: FontSize.font14,
+    fontFamily: FontFamily.Bold,
+    left: normalize(8),
   },
 });

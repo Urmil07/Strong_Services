@@ -6,7 +6,7 @@ import {
 import {Colors, FontFamily, FontSize} from '@Constants';
 import {ListRenderItem, StyleSheet, Text, View} from 'react-native';
 
-import {Dataledger} from '@/Interfaces/ReportInterface';
+import {LedgerDataInterfase} from '@/Interfaces/DBReducerInterFace';
 import {RNCText} from 'Common';
 import React from 'react';
 import dayjs from 'dayjs';
@@ -23,11 +23,8 @@ const LedgerView: ListRenderItem<LedgerDataInterfase> = ({index, item}) => {
         <View style={styles.headContainer}>
           <View style={{flexDirection: 'row'}}>
             <View style={{width: '35%'}}>
-              <RNCText size={FontSize.font11}>
-                Date :{' '}
-                <RNCText size={FontSize.font11} family={FontFamily.Bold}>
-                  {dayjs(item.ldate).format('DD/MM/YYYY')}
-                </RNCText>
+              <RNCText size={FontSize.font11} family={FontFamily.Bold}>
+                {dayjs(item.ldate).format('DD/MM/YYYY')}
               </RNCText>
             </View>
             <View
@@ -36,14 +33,11 @@ const LedgerView: ListRenderItem<LedgerDataInterfase> = ({index, item}) => {
                 justifyContent: 'center',
                 alignItems: 'flex-end',
               }}>
-              <RNCText size={FontSize.font11}>
-                Debit :{' '}
-                <RNCText
-                  size={FontSize.font11}
-                  family={FontFamily.Bold}
-                  color={Colors.Danger}>
-                  {format(Number(item.dramt))}
-                </RNCText>
+              <RNCText
+                size={FontSize.font11}
+                family={FontFamily.Bold}
+                color={Colors.Danger}>
+                {format(Number(item.dramt))}
               </RNCText>
             </View>
             <View
@@ -52,27 +46,31 @@ const LedgerView: ListRenderItem<LedgerDataInterfase> = ({index, item}) => {
                 alignItems: 'flex-end',
                 justifyContent: 'center',
               }}>
-              <RNCText size={FontSize.font11}>
-                Credit :{' '}
-                <RNCText
-                  size={FontSize.font11}
-                  family={FontFamily.Bold}
-                  color={Colors.EAGreen}>
-                  {format(Number(item.cramt))}
-                </RNCText>
+              <RNCText
+                size={FontSize.font11}
+                family={FontFamily.Bold}
+                color={Colors.EAGreen}>
+                {format(Number(item.cramt))}
               </RNCText>
             </View>
+          </View>
+          <View>
+            <RNCText size={FontSize.font11}>
+              Account :{' '}
+              <RNCText size={FontSize.font11} family={FontFamily.Bold}>
+                {item.account}
+              </RNCText>
+            </RNCText>
           </View>
         </View>
       </CollapseHeader>
       <CollapseBody>
-        <View style={styles.bodyContainer}>
+        <View style={[styles.bodyContainer, {paddingTop: normalize(6)}]}>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-              paddingTop: normalize(6),
             }}>
             <RNCText size={FontSize.font11}>
               Month :{' '}
@@ -99,14 +97,14 @@ const LedgerView: ListRenderItem<LedgerDataInterfase> = ({index, item}) => {
 
           <View
             style={{flexDirection: 'row', alignItems: 'flex-start', gap: 5}}>
-            <View style={{flex: 0.8}}>
+            {/* <View style={{flex: 0.8}}>
               <RNCText size={FontSize.font11}>
                 Account :{' '}
                 <RNCText size={FontSize.font11} family={FontFamily.Bold}>
                   {item.account}
                 </RNCText>
               </RNCText>
-            </View>
+            </View> */}
 
             <View style={{flex: 1}}>
               <RNCText size={FontSize.font11}>

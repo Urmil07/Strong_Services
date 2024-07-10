@@ -12,7 +12,7 @@ import normalize from 'react-native-normalize';
 type Prop = TextInputProps & {
   containerStyle?: any;
   textInputStyle?: any;
-  title: string;
+  title?: string;
   leftContainer?: any;
   rightContainer?: any;
   control: Control<FormValues>;

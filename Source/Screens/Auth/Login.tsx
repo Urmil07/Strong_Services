@@ -1,13 +1,7 @@
+import {Colors, FontFamily, FontSize, Images, normalize} from '@Constants';
+import {Estronglogin, createMstTable, setIsAuth, setUserRights} from '@Actions';
 import {
-  Colors,
-  FontFamily,
-  FontSize,
-  Images,
-  isAndroid,
-  normalize,
-} from '@Constants';
-import {Estronglogin, SetIsAuth, SetUserRights} from 'Reducers';
-import {
+  Keyboard,
   Pressable,
   SafeAreaView,
   StatusBar,
@@ -16,7 +10,6 @@ import {
 } from 'react-native';
 import {RNCButton, RNCDropdown, RNCText, RNCTextInput} from 'Common';
 import React, {useEffect, useState} from 'react';
-import {useAppDispatch, useAppSelector} from '@ReduxHook';
 
 import FastImage from 'react-native-fast-image';
 import FontAwesome from 'react-native-vector-icons/FontAwesome6';
@@ -30,9 +23,6 @@ const LoginType = [
 ];
 
 const Login = () => {
-  const dispatch = useAppDispatch();
-  const {ToggleToast} = useAppSelector(({AppReducer}) => AppReducer);
-
   const [PasswordHide, setPasswordHide] = useState(true);
   const [ActiveTab, setActiveTab] = useState('OWNER');
   const {control, handleSubmit, resetField, reset} = useForm<FormValues>({
@@ -49,18 +39,18 @@ const Login = () => {
     reset();
   }, [ActiveTab]);
 
-  const OnSubmit = (data: any) => {
-    // console.log('data', data);
-    // Estronglogin({EntryId: 'patelwarehousing27@gmail.com', EntryPwd: '3242'}),
-    dispatch(Estronglogin(data))
-      .unwrap()
-      .then(async response => {
-        if (response.status === 200) {
-          const User = await Functions.getUser();
-          dispatch(SetUserRights(User?.userrights));
-          dispatch(SetIsAuth(false));
-        }
-      });
+  useEffect(() => {}, []);
+
+  const OnSubmit = async (data: any) => {
+    Keyboard.dismiss();
+    await createMstTable();
+    const Login = await Estronglogin(data);
+
+    if (Login.status == 200) {
+      const User = await Functions.getUser();
+      setUserRights(User?.userrights);
+      setIsAuth(true);
+    }
   };
 
   return (

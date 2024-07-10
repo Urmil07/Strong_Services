@@ -29,7 +29,7 @@ const CompanyCard = ({
     <Pressable
       style={{
         backgroundColor: Colors.header,
-        flex: 1,
+
         width: normalize(300),
         borderRadius: 6,
         overflow: 'hidden',
@@ -38,7 +38,7 @@ const CompanyCard = ({
         flexDirection: 'row',
       }}
       onPress={() => onPress(id)}>
-      <View style={{flex: 1, backgroundColor: Colors.card}}>
+      <View style={{backgroundColor: Colors.card}}>
         <View
           style={{
             flexDirection: 'row',
@@ -66,7 +66,6 @@ const CompanyCard = ({
         </View>
         <View
           style={{
-            flex: 1,
             justifyContent: 'space-between',
             padding: normalize(10),
             flexDirection: 'row',

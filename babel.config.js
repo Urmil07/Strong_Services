@@ -1,7 +1,6 @@
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
   plugins: [
-    'react-native-reanimated/plugin',
     [
       "module-resolver",
       {
@@ -12,6 +11,7 @@ module.exports = {
           "Reducers": "./Source/Redux/ExtraReducers",
           "@Constants": "./Source/Constants",
           "@Interfaces": "./Source/Interfaces",
+          "@Actions": "./Source/Actions",
           "@ReduxHook": "./Source/Utils/Hook/ReduxHook",
           "App": "./Source/Screens/App",
           "Auth": "./Source/Screens/Auth",
@@ -21,5 +21,6 @@ module.exports = {
         },
       },
     ],
+    'react-native-reanimated/plugin',
   ],
 };

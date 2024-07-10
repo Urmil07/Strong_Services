@@ -48,7 +48,7 @@ const OSView: ListRenderItem<Datasaleo | Datapurco> = ({index, item}) => {
             <View style={{width: '40%'}}>
               <RNCText size={FontSize.font11}>
                 Days :{' '}
-                <RNCText size={FontSize.font11}>
+                <RNCText size={FontSize.font11} family={FontFamily.SemiBold}>
                   {item.days}
                   {item.compcode && `[${item.compcode}]`}
                 </RNCText>
@@ -78,7 +78,7 @@ const OSView: ListRenderItem<Datasaleo | Datapurco> = ({index, item}) => {
         </View>
       </CollapseHeader>
       <CollapseBody>
-        <Animated.View style={styles.bodyContainer}>
+        <View style={[styles.bodyContainer, {paddingTop: normalize(4)}]}>
           <View
             style={{
               flexDirection: 'row',
@@ -176,7 +176,7 @@ const OSView: ListRenderItem<Datasaleo | Datapurco> = ({index, item}) => {
               </RNCText>
             </RNCText>
           </View>
-        </Animated.View>
+        </View>
       </CollapseBody>
     </Collapse>
   );
@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: normalize(8),
     borderRadius: 4,
     justifyContent: 'center',
+    gap: 6,
   },
   bodyContainer: {
     backgroundColor: Colors.backgroundSecondary,
@@ -200,6 +201,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
     justifyContent: 'center',
     top: -normalize(4),
-    gap: 4,
+    gap: 6,
   },
 });

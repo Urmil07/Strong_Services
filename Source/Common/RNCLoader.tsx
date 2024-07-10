@@ -1,35 +1,29 @@
+import {Colors, FontFamily, FontSize} from '@/Constants';
 import {StyleSheet, View} from 'react-native';
+
+import {ActivityIndicator} from 'react-native-paper';
+import {LoaderProps} from '@/Interfaces/Common';
+import RNCStyle from './RNCStyle';
+import RNCText from './RNCText';
 import React from 'react';
 import normalize from 'react-native-normalize';
-import {Colors, FontFamily, FontSize} from '@/Constants';
-import RNCStyle from './RNCStyle';
-import {LoaderProps} from '@/Interfaces/Common';
-import {ActivityIndicator} from 'react-native-paper';
-import RNCText from './RNCText';
+import {useAppStore} from '@Actions';
 
-const RNCLoader = (props: LoaderProps) => {
-  const {
-    visible,
-    LoaderFontStyle,
-    LoderViewStyle,
-    size = normalize(30),
-    style,
-  } = props;
-
-  if (visible)
+const RNCLoader = () => {
+  const {loading} = useAppStore();
+  if (loading)
     return (
-      <View style={[styles.Container, style]}>
-        <View style={[styles.LoderView, LoderViewStyle]}>
+      <View style={[styles.Container]}>
+        <View style={[styles.LoderView]}>
           <ActivityIndicator
-            size={size}
+            size={normalize(30)}
             animating={true}
             color={Colors.WText}
           />
           <RNCText
-            family={FontFamily.SemiBold}
-            size={FontSize.font15}
-            color={Colors.WText}
-            style={LoaderFontStyle}>
+            family={FontFamily.Bold}
+            size={FontSize.font16}
+            color={Colors.WText}>
             Loading...
           </RNCText>
         </View>
@@ -54,10 +48,10 @@ const styles = StyleSheet.create({
   LoderView: {
     justifyContent: 'space-evenly',
     alignItems: 'center',
-    alignSelf: 'center',
+
     height: normalize(110),
     width: normalize(110),
     borderRadius: 12,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.header,
   },
 });

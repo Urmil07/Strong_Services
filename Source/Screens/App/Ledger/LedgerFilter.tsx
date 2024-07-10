@@ -1,36 +1,39 @@
-import {Colors, FontFamily, FontSize, isAndroid} from '@Constants';
+import {Colors, FontFamily, FontSize} from '@Constants';
+import {
+  GetLedger,
+  ResetAll,
+  setFilterArea,
+  setFilterCity,
+  setFilterEndDate,
+  setFilterMonth,
+  setFilterStartDate,
+  setFilterSubschedule,
+  setLoading,
+  useReportStore,
+} from '@Actions';
 import {
   Pressable,
   SafeAreaView,
   ScrollView,
-  StatusBar,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import {RNCButton, RNCText} from 'Common';
-import {
-  SetApplyFilter,
-  SetFilterArea,
-  SetFilterCity,
-  SetFilterMonth,
-  SetFilterSubschedule,
-  SetResetFilter,
-} from 'Reducers';
-import {useAppDispatch, useAppSelector} from '@ReduxHook';
+import React, {FC, useEffect, useLayoutEffect, useState} from 'react';
+import dayjs, {Dayjs} from 'dayjs';
 
-import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
+import {DatePickerModal} from 'CApp';
+import {DateType} from 'react-native-ui-datepicker';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {LedgerFilterPageProps} from '@/Interfaces/AppStackParamList';
 import {MultiSelect} from 'react-native-element-dropdown';
-import React from 'react';
-import {StackNavigation} from '@/Interfaces/AppStackParamList';
 import normalize from 'react-native-normalize';
-import {useNavigation} from '@react-navigation/native';
 
 type Props = {};
 
-const LedgerFilter = (props: Props) => {
-  const navigation = useNavigation<StackNavigation>();
-  const dispatch = useAppDispatch();
+const LedgerFilter: FC<LedgerFilterPageProps> = ({navigation, route}) => {
+  const {ListOrder} = route.params;
+
   const {
     MastCity,
     MastArea,
@@ -40,47 +43,74 @@ const LedgerFilter = (props: Props) => {
     FilterArea,
     FilterSubschedule,
     FilterMonth,
-  } = useAppSelector(({DBReducer}) => DBReducer);
+    FilterStartDate,
+    FilterEndDate,
+  } = useReportStore();
+
+  const [DateSelected, setDateSelected] = useState<Dayjs>(dayjs());
+  const [DateType, setDateType] = useState<'start' | 'end'>('start');
+  const [DatePickerVisible, setDatePickerVisible] = useState<boolean>(false);
+  const [StartDate, setStartDate] = useState<string>();
+  const [EndDate, setEndDate] = useState<string>();
+  const [City, setCity] = useState<string[]>([]);
+  const [Area, setArea] = useState<string[]>([]);
+  const [Month, setMonth] = useState<string[]>([]);
+  const [Subschedule, setSubschedule] = useState<string[]>([]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Ledger Filter',
+    });
+  }, [navigation]);
+
+  useEffect(() => {
+    navigation.addListener('blur', () => {
+      setLoading(true);
+      GetLedger({Orderby: ListOrder});
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
+    });
+  }, [navigation]);
+
+  useEffect(() => {
+    if (FilterStartDate) setStartDate(FilterStartDate);
+    if (FilterEndDate) setEndDate(FilterEndDate);
+    if (FilterCity.length) setCity(FilterCity);
+    if (FilterArea.length) setArea(FilterArea);
+    if (FilterMonth.length) setMonth(FilterMonth);
+    if (FilterSubschedule.length) setSubschedule(FilterSubschedule);
+  }, []);
+
+  const handleDate = ({date}: {date: DateType}) => {
+    setDateSelected(dayjs(date));
+    if (DateType === 'start')
+      setStartDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss'));
+
+    if (DateType === 'end')
+      setEndDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss'));
+
+    setDatePickerVisible(false);
+  };
+
+  const handleApply = () => {
+    setLoading(true);
+    if (StartDate) setFilterStartDate(StartDate);
+    if (EndDate) setFilterEndDate(EndDate);
+    if (City.length) setFilterCity(City);
+    if (Area.length) setFilterArea(Area);
+    if (Month.length) setFilterMonth(Month);
+    if (Subschedule.length) setFilterSubschedule(Subschedule);
+    navigation.goBack();
+  };
   return (
     <View style={{flex: 1}}>
-      <StatusBar backgroundColor={Colors.header} />
-      <SafeAreaView style={{backgroundColor: Colors.header}} />
-
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: Colors.header,
-          paddingVertical: isAndroid ? normalize(17) : normalize(8),
-        }}>
-        <View
-          style={{
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'row',
-            gap: 10,
-            left: normalize(15),
-          }}>
-          <Pressable
-            style={{
-              padding: normalize(10),
-              borderRadius: 100,
-            }}
-            onPress={() => navigation.goBack()}>
-            <FontAwesome6Icon
-              name="chevron-left"
-              size={normalize(20)}
-              color={Colors.White}
-            />
-          </Pressable>
-          <RNCText
-            family={FontFamily.SemiBold}
-            size={FontSize.font18}
-            color={Colors.WText}>
-            Filter
-          </RNCText>
-        </View>
-      </View>
+      <DatePickerModal
+        visible={DatePickerVisible}
+        handleChange={handleDate}
+        value={DateSelected}
+        setVisible={setDatePickerVisible}
+      />
 
       <View
         style={{
@@ -88,7 +118,53 @@ const LedgerFilter = (props: Props) => {
           padding: normalize(10),
           gap: 15,
         }}>
-        <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{gap: 10}}>
+          <View style={{gap: 5}}>
+            <RNCText style={styles.title}>Start Date</RNCText>
+            <Pressable
+              style={styles.dateInput}
+              onPress={() => {
+                setDateSelected(dayjs(StartDate));
+                setDateType('start');
+                setDatePickerVisible(true);
+              }}>
+              <RNCText size={FontSize.font13}>
+                {StartDate
+                  ? dayjs(StartDate)?.format('DD/MM/YYYY')
+                  : '-- / -- / ----'}
+              </RNCText>
+              <Ionicons
+                name="calendar"
+                size={normalize(22)}
+                color={Colors.Black}
+              />
+            </Pressable>
+          </View>
+
+          <View style={{gap: 5}}>
+            <RNCText style={styles.title}>End Date</RNCText>
+            <Pressable
+              style={styles.dateInput}
+              onPress={() => {
+                setDateSelected(dayjs(EndDate));
+                setDateType('end');
+                setDatePickerVisible(true);
+              }}>
+              <RNCText size={FontSize.font13}>
+                {EndDate
+                  ? dayjs(EndDate)?.format('DD/MM/YYYY')
+                  : ' -- / -- / ----'}
+              </RNCText>
+              <Ionicons
+                name="calendar"
+                size={normalize(22)}
+                color={Colors.Black}
+              />
+            </Pressable>
+          </View>
+
           <View style={{gap: 5}}>
             <RNCText family={FontFamily.Bold} style={{left: normalize(10)}}>
               City
@@ -106,10 +182,8 @@ const LedgerFilter = (props: Props) => {
               valueField="value"
               placeholder="Select City..."
               searchPlaceholder="Search..."
-              value={FilterCity}
-              onChange={item => {
-                dispatch(SetFilterCity(item));
-              }}
+              value={City}
+              onChange={item => setCity(item)}
               selectedStyle={styles.selectedStyle}
               activeColor={Colors.LightBlue}
               itemTextStyle={styles.itemTextStyle}
@@ -134,10 +208,8 @@ const LedgerFilter = (props: Props) => {
               valueField="value"
               placeholder="Select Area..."
               searchPlaceholder="Search..."
-              value={FilterArea}
-              onChange={item => {
-                dispatch(SetFilterArea(item));
-              }}
+              value={Area}
+              onChange={item => setArea(item)}
               selectedStyle={styles.selectedStyle}
               activeColor={Colors.LightBlue}
               itemTextStyle={styles.itemTextStyle}
@@ -162,10 +234,8 @@ const LedgerFilter = (props: Props) => {
               valueField="value"
               placeholder="Select Month..."
               searchPlaceholder="Search..."
-              value={FilterMonth}
-              onChange={item => {
-                dispatch(SetFilterMonth(item));
-              }}
+              value={Month}
+              onChange={item => setMonth(item)}
               selectedStyle={styles.selectedStyle}
               activeColor={Colors.LightBlue}
               itemTextStyle={styles.itemTextStyle}
@@ -190,10 +260,8 @@ const LedgerFilter = (props: Props) => {
               valueField="value"
               placeholder="Select Subschedule..."
               searchPlaceholder="Search..."
-              value={FilterSubschedule}
-              onChange={item => {
-                dispatch(SetFilterSubschedule(item));
-              }}
+              value={Subschedule}
+              onChange={item => setSubschedule(item)}
               selectedStyle={styles.selectedStyle}
               activeColor={Colors.LightBlue}
               itemTextStyle={styles.itemTextStyle}
@@ -222,18 +290,13 @@ const LedgerFilter = (props: Props) => {
           }}
           btnTextStyle={{color: Colors.Black}}
           onPress={() => {
-            dispatch(SetResetFilter(true));
+            setLoading(true);
+            ResetAll();
+            // dispatch(SetResetFilter(true));
             navigation.goBack();
           }}
         />
-        <RNCButton
-          name={'Apply'}
-          style={{flex: 1}}
-          onPress={() => {
-            dispatch(SetApplyFilter(true));
-            navigation.goBack();
-          }}
-        />
+        <RNCButton name={'Apply'} style={{flex: 1}} onPress={handleApply} />
       </View>
       <SafeAreaView />
     </View>
@@ -244,9 +307,10 @@ export default LedgerFilter;
 
 const styles = StyleSheet.create({
   dropdown: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: 12,
-    padding: normalize(10),
+    borderRadius: 5,
+    paddingHorizontal: normalize(8),
+    borderColor: Colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   containerStyle: {
     borderRadius: 8,
@@ -280,5 +344,19 @@ const styles = StyleSheet.create({
   },
   itemTextStyle: {
     color: Colors.Black,
+  },
+  title: {
+    fontFamily: FontFamily.SemiBold,
+    left: normalize(10),
+  },
+  dateInput: {
+    borderColor: Colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 5,
+    padding: normalize(6),
+    paddingHorizontal: normalize(10),
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
   },
 });

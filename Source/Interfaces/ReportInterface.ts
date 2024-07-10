@@ -1,13 +1,22 @@
 export interface EstrongReportInterface {
   status: number;
   message: string;
-  data_saleos: Datasaleo[];
-  data_purcos: Datapurco[];
-  data_ledger: Dataledger[];
+  data_saleosmst: Datasaleo[];
+  data_purcosmst: Datapurco[];
+  data_ledgermst: Dataledger[];
   data_coldmst: Datacoldmst[];
   data_coldstksummst: Datacoldstksummst[];
   data_itemmst: Dataitemmst[];
   data_compmst: Datacompmst[];
+  data_users: Datausermst[];
+  data_entryupdatemst: Dataentryupdate[];
+}
+
+export interface Dataentryupdate {
+  id: string;
+  entryemail: string;
+  reportname: string;
+  entrydate: string;
 }
 
 export interface Datacompmst {
@@ -25,11 +34,20 @@ export interface Datacompmst {
 export interface Dataitemmst {
   id: string;
   itemid: string;
-  ItemName: string;
-  ItemGrpName: string;
-  UnitName: string;
-  EntryEmail: string;
-  CompId: string;
+  itemname: string;
+  itemGrpname: string;
+  itemCode: string;
+  mrp: string;
+  salerate: string;
+  disc: string;
+  sgstper: string;
+  cgstper: string;
+  igstper: string;
+  unitName: string;
+  entryemail: string;
+  compid: string;
+  packper: string;
+  rateperunit: string;
 }
 
 export interface Datacoldstksummst {
@@ -176,4 +194,44 @@ export interface Datasaleo {
   returnamt: string;
   runbalamt: string;
   saleosid: string;
+}
+
+export interface Datausermst {
+  userid: string;
+  entryId?: any;
+  entryName: string;
+  entryEmail: string;
+  entryPwd: string;
+  compdbname: string;
+  entryrights: string;
+  erepsaleos: string;
+  ereppurcos: string;
+  erepledger: string;
+  erepcoldlotwise: string;
+  erepcoldaccwise: string;
+  erepcoldstkwise?: any;
+  efrmsaleorder: string;
+  erepsaleorder: string;
+  efrmsaleinvoice: string;
+  erepsaleinvoice: string;
+  accId: number;
+  accname: string;
+  accEmail: string;
+  accpwd: string;
+  acctype: string;
+  areaname: string;
+  accrights: string;
+  arepsaleos: string;
+  areppurcos: string;
+  arepledger: string;
+  arepcoldlotwise: string;
+  arepcoldaccwise: string;
+  arepcoldstkwise?: any;
+  afrmsaleorder: string;
+  arepsaleorder: string;
+  afrmsaleinvoice: string;
+  arepsaleinvoice: string;
+  hidefield: string;
+  taxon: string;
+  statename: string;
 }

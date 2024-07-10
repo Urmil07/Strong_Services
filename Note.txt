@@ -9,8 +9,8 @@ yarn react-native generate-bootsplash logo/strong_logo.png --platforms=android,i
 $sqlqry =   " Select ledgerid, CASE WHEN account = 'OPENING AMOUNT' THEN 'AA' ELSE '' END as op,DATE_FORMAT(ldate,'%d/%m/%Y') as ldate,account,truncate(dramt,2) as dramt,truncate(cramt,2) as cramt, " .
 	                    " truncate(balamt,2) as balamt, crdr,narration,remarks,cheque,cityname ".
                         " from " . $this->Ledger_Table_Name .
-						" left join compmst on compmst.compid = ledgermst.compid " .
-                        " where ledgermst.entryemail = '".$this->entryid . "' and accId = ".$this->accid .
+						" left join compmst on compmst.compid = ledger.compid " .
+                        " where ledger.entryemail = '".$this->entryid . "' and accId = ".$this->accid .
                         $this->lcon .
                         " order by ledgerid, date(ldate), op asc";
 
@@ -21,7 +21,7 @@ check this one
 $sqlqry =   " Select ledgerid, CASE WHEN account = 'OPENING AMOUNT' THEN 'AA' ELSE '' END as op,DATE_FORMAT(ldate,'%d/%m/%Y') as ldate,account,truncate(dramt,2) as dramt,truncate(cramt,2) as cramt, " .
 	                    " truncate(balamt,2) as balamt, crdr,narration,remarks,cheque,cityname ".
                         " from " . $this->Ledger_Table_Name .
-						" left join compmst on compmst.compid = ledgermst.compid " .
-                        " where ledgermst.entryemail = '".$this->entryid . "' " .
+						" left join compmst on compmst.compid = ledger.compid " .
+                        " where ledger.entryemail = '".$this->entryid . "' " .
                         $this->lcon .
                         " order by ledgerid, date(ldate), op asc";                        

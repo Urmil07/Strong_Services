@@ -1,9 +1,5 @@
 // import SQLite from 'react-native-sqlite-2';
-import SQLite, {
-  SQLiteDatabase,
-  enablePromise,
-  openDatabase,
-} from 'react-native-sqlite-storage';
+import SQLite, {SQLiteDatabase} from 'react-native-sqlite-storage';
 
 SQLite.enablePromise(true);
 
@@ -26,7 +22,7 @@ export let db = SQLite.openDatabase({
   location: 'default',
 });
 
-const TableData = () => {
+export const TableData = () => {
   return [
     {
       table_name: 'coldmst',
@@ -108,16 +104,7 @@ const TableData = () => {
                     compyeardbname TEXT,
                     installdate TEXT`,
     },
-    {
-      table_name: 'itemmst',
-      table_field: `id INTEGER,
-                    itemid INTEGER,
-                    ItemName TEXT,
-                    ItemGrpName TEXT,
-                    UnitName TEXT,
-                    EntryEmail TEXT,
-                    CompId INTEGER`,
-    },
+
     {
       table_name: 'ledgermst',
       table_field: `ledgerid INTEGER,
@@ -185,16 +172,6 @@ const TableData = () => {
                     Weight INTEGER`,
     },
     {
-      table_name: 'saleordmst',
-      table_field: `EntryEmail TEXT,
-                    CompId INTEGER,
-                    OrdNo INTEGER,
-                    OrdDt TEXT,
-                    BooKId INTEGER,
-                    AccId INTEGER,
-                    AgentId INTEGER`,
-    },
-    {
       table_name: 'saleosmst',
       table_field: `saleosid INTEGER,
                     entryid INTEGER,
@@ -224,6 +201,7 @@ const TableData = () => {
     {
       table_name: 'users',
       table_field: `entryId INTEGER,
+                    userid TEXT,
                     entryName TEXT,
                     entryEmail TEXT,
                     entryPwd TEXT,
@@ -244,6 +222,7 @@ const TableData = () => {
                     accEmail TEXT,
                     accpwd TEXT,
                     acctype TEXT,
+                    areaname TEXT,
                     accrights TEXT,
                     arepsaleos INTEGER,
                     areppurcos INTEGER,
@@ -254,7 +233,68 @@ const TableData = () => {
                     afrmsaleorder INTEGER,
                     arepsaleorder INTEGER,
                     afrmsaleinvoice INTEGER,
-                    arepsaleinvoice INTEGER`,
+                    arepsaleinvoice INTEGER,
+                    hidefield INTEGER,
+                    taxon INTEGER,
+                    statename INTEGER`,
+    },
+    {
+      table_name: 'saleordermst',
+      table_field: `OrdNo INTEGER PRIMARY KEY,
+                    OrdDate TEXT,
+                    CompanyName TEXT,
+                    CompId INTEGER,
+                    BooKName TEXT,
+                    BooKId INTEGER,
+                    AreaName TEXT,
+                    Areaid INTEGER,
+                    AccName TEXT,
+                    AccID INTEGER,
+                    AgentName TEXT,
+                    AgentId INTEGER,
+                    ItemId INTEGER,
+                    ItemName TEXT,
+                    ItemGrpname TEXT,
+                    Pcs INTEGER,
+                    Pac INTEGER,
+                    Qty INTEGER,
+                    MstRate INTEGER,
+                    Rate INTEGER,
+                    Rateperunit INTEGER,
+                    Amt INTEGER,
+                    Dis1per INTEGER,
+                    Dis1amt INTEGER,
+                    Dis2per INTEGER,
+                    Dis2amt INTEGER,
+                    GstGamt INTEGER,
+                    SGSTPER	INTEGER,
+                    SGSTAMT	INTEGER,
+                    CGSTPER	INTEGER,
+                    CGSTAMT	INTEGER,
+                    IGSTPER	INTEGER,
+                    IGSTAMT	INTEGER,
+                    Gamt INTEGER,
+                    isSYNC INTEGER,
+                    UniqNumber INTEGER`,
+    },
+    {
+      table_name: 'itemmst',
+      table_field: `id INTEGER,
+                    itemid INTEGER,
+                    itemname TEXT,
+                    itemGrpname TEXT,
+                    packper TEXT,
+                    rateperunit TEXT,
+                    unitName TEXT,
+                    entryemail TEXT,
+                    compid INTEGER,
+                    itemCode INTEGER,
+                    mrp TEXT,
+                    salerate TEXT,
+                    disc TEXT,
+                    sgstper TEXT,
+                    cgstper TEXT,
+                    igstper TEXT`,
     },
   ];
 };
@@ -263,7 +303,10 @@ export const createTable = async (db: SQLiteDatabase) => {
   const Tables = TableData();
   Tables?.map(async table => {
     const query = `CREATE TABLE IF NOT EXISTS ${table.table_name} (${table.table_field})`;
-    await db.executeSql(query);
+    await db
+      .executeSql(query)
+      .then()
+      .catch(error => console.log('error', error));
   });
 };
 
@@ -328,3 +371,31 @@ export async function DeleteTable(tableName: string) {
     );
   });
 }
+
+export const Updatetblmst = async ({
+  date,
+  tableName,
+}: {
+  tableName: string;
+  date: string;
+}) => {
+  const db = await getDBConnection();
+  db.transaction(tx => {
+    tx.executeSql(
+      `UPDATE tableMst SET updated_at='${date}' WHERE tableName='${tableName}'`,
+      [],
+      (tx, results) => {
+        if (results.rowsAffected > 0) {
+          console.log(`All data Updated table name is ${tableName} `);
+        }
+      },
+      error => {
+        // Handle error
+        console.log(
+          `Error Updating table name is ${tableName}, error ${error}`,
+        );
+        return false;
+      },
+    );
+  });
+};

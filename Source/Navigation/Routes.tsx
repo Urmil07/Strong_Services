@@ -1,31 +1,31 @@
-import {Colors, FontFamily, FontSize, NavigationRoutes} from '@/Constants';
-import React, {useEffect} from 'react';
+import {Colors, NavigationRoutes} from '@/Constants';
+import {RNCLoader, RNCToast} from 'Common';
+import React, {useEffect, useState} from 'react';
 import {createTable, getDBConnection} from '@/DB/database';
-import {useAppDispatch, useAppSelector} from '@ReduxHook';
+import {setIsAuth, setOnBoarding, useAppStore} from '@Actions';
 
 import AppStack from './AppStack';
 import AuthStack from './AuthStack';
-// import SampleScreen from '../../SampleScreen';
 import BootSplash from 'react-native-bootsplash';
 import {Functions} from '@Utils';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {NavigationContainer} from '@react-navigation/native';
-import {RNCLoader} from 'Common';
-import {SetIsAuth} from 'Reducers';
-import {ToastProvider} from 'react-native-toast-notifications';
+import OnboardingScreen from '../../OnboardingScreen';
+import SampleScreen from '../../SampleScreen';
+import {StatusBar} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 const Stack = createNativeStackNavigator();
 
 const Routes = () => {
-  const dispatch = useAppDispatch();
-  const {IsAuth} = useAppSelector(({LoginReducer}) => LoginReducer);
-  const {Loading} = useAppSelector(({AppReducer}) => AppReducer);
+  const {IsAuth, OnBoarding} = useAppStore();
 
   useEffect(() => {
     // createTable();
     InitData().finally(async () => {
-      await BootSplash.hide({fade: true});
+      setTimeout(() => {
+        BootSplash.hide({fade: true});
+      }, 1500);
       console.log('BootSplash has been hidden successfully');
     });
   }, []);
@@ -39,9 +39,18 @@ const Routes = () => {
     //   userrights: 'Owner',
     // });
 
+    const AppData = await Functions.getAppData();
+    console.log('AppData', AppData);
+    if (AppData && !AppData.OnBoarding) {
+      console.log('AppData.OnBoarding', AppData.OnBoarding);
+      setOnBoarding(false);
+    } else {
+      setOnBoarding(true);
+    }
+
     const User = await Functions.getUser();
     if (User) {
-      dispatch(SetIsAuth(false));
+      setIsAuth(true);
     }
 
     const db = await getDBConnection();
@@ -51,38 +60,33 @@ const Routes = () => {
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
-      <RNCLoader visible={Loading} />
+      <RNCLoader />
+      <StatusBar backgroundColor={Colors.header} />
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            contentStyle: {backgroundColor: Colors.background},
+            animation: 'slide_from_right',
+          }}>
+          {/* <OnboardingScreen /> */}
+          {/* <Stack.Screen name="SampleScreen" component={SampleScreen} /> */}
 
-      <ToastProvider
-        textStyle={{
-          fontSize: FontSize.font14,
-          fontFamily: FontFamily.Medium,
-        }}
-        animationType="zoom-in"
-        offsetBottom={60}
-        placement="bottom"
-        duration={4000}
-        animationDuration={200}
-        data={'Tost'}>
-        <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-              contentStyle: {backgroundColor: Colors.background},
-              animation: 'slide_from_right',
-            }}>
-            {/* <Stack.Screen name="SampleScreen" component={SampleScreen} /> */}
-            {IsAuth ? (
-              <Stack.Screen
-                name={NavigationRoutes.AUTH}
-                component={AuthStack}
-              />
-            ) : (
-              <Stack.Screen name={NavigationRoutes.APP} component={AppStack} />
-            )}
-          </Stack.Navigator>
-        </NavigationContainer>
-      </ToastProvider>
+          {OnBoarding && (
+            <Stack.Screen
+              name="OnboardingScreen"
+              component={OnboardingScreen}
+            />
+          )}
+          {!IsAuth ? (
+            <Stack.Screen name={NavigationRoutes.AUTH} component={AuthStack} />
+          ) : (
+            <Stack.Screen name={NavigationRoutes.APP} component={AppStack} />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+
+      <RNCToast />
     </GestureHandlerRootView>
   );
 };

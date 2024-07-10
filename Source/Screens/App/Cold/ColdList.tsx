@@ -5,30 +5,31 @@ import {
   SafeAreaView,
   StatusBar,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
 import {RNCNodata, RNCText} from 'Common';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '@ReduxHook';
 
 import {ColdListPageProps} from '@/Interfaces/AppStackParamList';
-import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
-import {GetLotWiseColdList} from 'Reducers';
+import {GetColdList} from 'Reducers';
 import normalize from 'react-native-normalize';
 
 const ColdList = ({navigation, route}: ColdListPageProps) => {
   const {type} = route.params;
   const dispatch = useAppDispatch();
 
-  const {LotWiseList} = useAppSelector(({DBReducer}) => DBReducer);
+  const {LotWiseList, MastColdList, FilterColdList} = useAppSelector(
+    ({DBReducer}) => DBReducer,
+  );
   const [SearchEnable, setSearchEnable] = useState(false);
   const [SearchText, setSearchText] = useState('');
 
-  useEffect(() => {
-    dispatch(GetLotWiseColdList());
+  useLayoutEffect(() => {
+    dispatch(GetColdList({type: type}));
   }, []);
 
   const handleSearch = (query: string) => {
@@ -49,62 +50,81 @@ const ColdList = ({navigation, route}: ColdListPageProps) => {
 
   return (
     <View style={{flex: 1}}>
-      <SafeAreaView style={{backgroundColor: Colors.card}} />
-      <StatusBar backgroundColor={Colors.card} />
+      <SafeAreaView style={{backgroundColor: Colors.header}} />
+      <StatusBar backgroundColor={Colors.header} />
 
       <View
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: Colors.card,
-          paddingVertical: isAndroid ? normalize(10) : 0,
+          backgroundColor: Colors.header,
+          paddingVertical: isAndroid ? normalize(17) : normalize(8),
         }}>
-        <View
-          style={{
-            alignItems: 'center',
-            flexDirection: 'row',
-            gap: 10,
-            left: normalize(15),
-          }}>
-          {SearchEnable ? (
+        {SearchEnable ? (
+          <View
+            style={{
+              // width: '60%',
+              padding: normalize(6),
+              paddingHorizontal: normalize(15),
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              flex: 1,
+            }}>
+            <TextInput
+              style={{
+                color: Colors.WText,
+                fontFamily: FontFamily.Medium,
+                fontSize: FontSize.font14,
+                borderBottomColor: Colors.White,
+                borderBottomWidth: StyleSheet.hairlineWidth,
+                flex: 1,
+                padding: normalize(5),
+                backgroundColor: Colors.card,
+                borderRadius: 4,
+              }}
+              value={SearchText}
+              onChangeText={handleSearch}
+              placeholder="Search"
+              placeholderTextColor={Colors.White}
+              autoFocus
+            />
+            <Pressable
+              style={{
+                backgroundColor: Colors.card,
+                padding: 5,
+                borderRadius: 4,
+              }}
+              onPress={() => handleSearch('')}>
+              <RNCText color={Colors.WText}>Clear</RNCText>
+            </Pressable>
+            <Pressable
+              onPress={() => setSearchEnable(!SearchEnable)}
+              style={{
+                backgroundColor: Colors.card,
+                padding: 5,
+                borderRadius: 4,
+              }}>
+              <RNCText color={Colors.WText}>Close</RNCText>
+
+              {/* <FontAwesome6Icon
+                name="xmark"
+                color={Colors.WText}
+                size={normalize(18)}
+              /> */}
+            </Pressable>
+          </View>
+        ) : (
+          <>
             <View
               style={{
-                width: '70%',
-                padding: normalize(5),
-                flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: 10,
+                flexDirection: 'row',
+                // gap: 10,
+                left: normalize(15),
               }}>
-              <TextInput
-                style={{
-                  color: Colors.WText,
-                  fontFamily: FontFamily.Medium,
-                  fontSize: FontSize.font18,
-                  borderBottomColor: Colors.White,
-                  borderBottomWidth: StyleSheet.hairlineWidth,
-                  flex: 1,
-                  padding: normalize(3),
-                }}
-                value={SearchText}
-                onChangeText={handleSearch}
-                placeholder="Search"
-                placeholderTextColor={Colors.White}
-                autoFocus
-              />
-              <Pressable
-                onPress={() => handleSearch('')}
-                style={{display: SearchText ? 'flex' : 'none'}}>
-                <FontAwesome6Icon
-                  name="xmark"
-                  color={Colors.WText}
-                  size={normalize(20)}
-                />
-              </Pressable>
-            </View>
-          ) : (
-            <>
               <Pressable
                 style={{padding: normalize(10), borderRadius: 100}}
                 onPress={() => navigation.goBack()}>
@@ -118,43 +138,106 @@ const ColdList = ({navigation, route}: ColdListPageProps) => {
                 family={FontFamily.SemiBold}
                 size={FontSize.font18}
                 color={Colors.WText}>
-                {type == 'lot'
-                  ? 'Lot Wise Report'
-                  : type == 'account'
-                  ? 'Account Wise Report'
-                  : type == 'summary'
-                  ? 'Stock Summary Report'
-                  : null}
+                {type == 'lot' ? 'Lotwise Stock' : 'Accountwise Stock'}
               </RNCText>
-            </>
-          )}
-        </View>
-        <View style={{padding: normalize(8), flexDirection: 'row', gap: 8}}>
-          <Pressable
-            style={{padding: normalize(10)}}
-            onPress={() => setSearchEnable(!SearchEnable)}>
-            <FontAwesome5Icon
-              name="search"
-              size={normalize(20)}
-              color={Colors.WText}
-            />
-          </Pressable>
-          <Pressable
-            style={{padding: normalize(10)}}
-            // onPress={() => navigation.navigate('OSListFilter')}
-          >
-            <FontAwesome5Icon
-              name="filter"
-              size={normalize(20)}
-              color={Colors.WText}
-            />
-          </Pressable>
-        </View>
+            </View>
+            <View
+              style={{padding: normalize(10), flexDirection: 'row', gap: 4}}>
+              <Pressable
+                style={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingHorizontal: normalize(5),
+                }}
+                onPress={() => setSearchEnable(!SearchEnable)}>
+                <FontAwesome5
+                  name="search"
+                  size={normalize(20)}
+                  color={Colors.WText}
+                />
+              </Pressable>
+              <Pressable
+                style={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingHorizontal: normalize(5),
+                }}
+                // onPress={() => navigation.navigate('OSListFilter', {type})}
+              >
+                <FontAwesome5
+                  name="filter"
+                  size={normalize(20)}
+                  color={Colors.WText}
+                />
+              </Pressable>
+              <Pressable
+                style={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingHorizontal: normalize(5),
+                }}
+                // onPress={() => setOrderByVisible(!OrderByVisible)}
+              >
+                <FontAwesome5
+                  name="sort-alpha-up"
+                  size={normalize(20)}
+                  color={Colors.WText}
+                />
+                {/* {OrderByVisible && (
+                  <Animated.View
+                    entering={ZoomIn.duration(200)}
+                    exiting={ZoomOut.duration(200)}
+                    style={{
+                      position: 'absolute',
+                      width: normalize(120),
+                      backgroundColor: Colors.header,
+                      top: normalize(25),
+                      right: 0,
+                      borderRadius: 12,
+                      zIndex: 1,
+                      overflow: 'hidden',
+                    }}>
+                    {OrderBy.map((item, index) => (
+                      <Pressable
+                        key={index}
+                        style={[
+                          {
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: normalize(10),
+                            borderBottomColor: Colors.Black,
+                            borderBottomWidth: StyleSheet.hairlineWidth,
+                          },
+                          ListOrder == item.value && {
+                            backgroundColor: Colors.backgroundSecondary,
+                          },
+                        ]}
+                        onPress={() => {
+                          setListOrder(item.value);
+                          setOrderByVisible(false);
+                        }}>
+                        <RNCText
+                          family={FontFamily.SemiBold}
+                          color={
+                            ListOrder == item.value
+                              ? Colors.Black
+                              : Colors.WText
+                          }>
+                          {item.label}
+                        </RNCText>
+                      </Pressable>
+                    ))}
+                  </Animated.View>
+                )} */}
+              </Pressable>
+            </View>
+          </>
+        )}
       </View>
 
       <View style={{flex: 1, padding: normalize(10)}}>
         <FlatList
-          data={LotWiseList}
+          data={FilterColdList}
           showsVerticalScrollIndicator={false}
           renderItem={({item, index}) => {
             return (
@@ -166,7 +249,7 @@ const ColdList = ({navigation, route}: ColdListPageProps) => {
                   borderRadius: 8,
                   justifyContent: 'center',
                 }}>
-                <RNCText>{item.lotno}</RNCText>
+                <RNCText>{type == 'lot' ? item.lotno : item.accname}</RNCText>
               </View>
             );
           }}

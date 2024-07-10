@@ -2,6 +2,7 @@ import {DeleteTable, db, getDBConnection} from '@/DB/database';
 import {FetchMethod, URL} from '@Constants';
 import {
   GetAccWiseColdList,
+  GetColdList,
   GetCompanys,
   GetFilterData,
   GetLedger,
@@ -56,10 +57,10 @@ export const EstrongReport = createAsyncThunk(
 const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
   return new Promise<void>(async (resolve, reject) => {
     if (response.status === 200) {
-      if (response.data_saleos.length > 0) {
+      if (response.data_saleosmst.length > 0) {
         await DeleteTable('saleosmst');
         await db.transaction(tx => {
-          const Rdata_saleos = response.data_saleos.map(data => {
+          const Rdata_saleos = response.data_saleosmst.map(data => {
             return new Promise<number>(async (resolve, reject) => {
               const {
                 accid,
@@ -144,12 +145,11 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
         });
       }
 
-      if (response.data_purcos.length > 0) {
+      if (response.data_purcosmst.length > 0) {
         await DeleteTable('purcosmst');
 
         await db.transaction(tx => {
-          console.log('response.data_purcos', response.data_purcos[0]);
-          const Rdata_purcos = response.data_purcos.map(data => {
+          const Rdata_purcos = response.data_purcosmst.map(data => {
             return new Promise<number>((resolve, reject) => {
               const {
                 CustomerEmail,
@@ -216,7 +216,7 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                 error => {
                   console.log('error', JSON.stringify(error, null, 2));
                   console.error(
-                    `Error inserting ${purcosid} into the database: ${error} Table >>>>> purcosmst`,
+                    `Error inserting ${purcosid} into the database: ${error} Table >>>>> purcos`,
                   );
                 },
               );
@@ -225,11 +225,11 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
         });
       }
 
-      if (response.data_ledger.length > 0) {
+      if (response.data_ledgermst.length > 0) {
         await DeleteTable('ledgermst');
 
         await db.transaction(tx => {
-          const Rdata_ledger = response.data_ledger.map(data => {
+          const Rdata_ledger = response.data_ledgermst.map(data => {
             return new Promise<number>((resolve, reject) => {
               const {
                 accid,
@@ -475,25 +475,40 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
           const Rdata_itemmst = response.data_itemmst.map(data => {
             return new Promise<number>((resolve, reject) => {
               const {
-                CompId,
-                EntryEmail,
-                ItemGrpName,
-                ItemName,
-                UnitName,
+                compid,
+                entryemail,
+                itemGrpname,
+                itemname,
                 id,
                 itemid,
+                unitName,
+                cgstper,
+                disc,
+                igstper,
+                itemCode,
+                mrp,
+                salerate,
+                sgstper,
               } = data;
 
+              // {"compid": "2048", "entryemail": "dssnvs@gmail.com", "id": "9452", "itemGrpname": "SUIT", "itemid": "84512", "itemname": "NAYASA FANCY DUPATTA", "unitName": ""}
               tx.executeSql(
-                `INSERT INTO itemmst (CompId,EntryEmail,ItemGrpName,ItemName,UnitName,id,itemid) VALUES (?,?,?,?,?,?,?)`,
+                `INSERT INTO itemmst (compid,entryemail,itemGrpname,itemname,unitName,id,itemid, cgstper, disc, igstper, itemCode, mrp, salerate, sgstper) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 [
-                  CompId,
-                  EntryEmail,
-                  ItemGrpName,
-                  ItemName,
-                  UnitName,
+                  compid,
+                  entryemail,
+                  itemGrpname,
+                  itemname,
+                  unitName,
                   id,
                   itemid,
+                  cgstper,
+                  disc,
+                  igstper,
+                  itemCode,
+                  mrp,
+                  salerate,
+                  sgstper,
                 ],
                 (tx, results) => {
                   if (results.rowsAffected > 0) {
@@ -543,6 +558,96 @@ const AddFetchData = (response: EstrongReportInterface, db: SQLiteDatabase) => {
                     resolve(results.insertId);
                   } else {
                     reject(new Error(`Failed to insert: ${compid}`));
+                  }
+                },
+              );
+            });
+          });
+        });
+      }
+
+      if (response.data_users.length > 0) {
+        await DeleteTable('users');
+        await db.transaction(tx => {
+          const Rdata_usermst = response.data_users.map(data => {
+            return new Promise<number>((resolve, reject) => {
+              const {
+                entryId,
+                userid,
+                entryName,
+                entryEmail,
+                entryPwd,
+                compdbname,
+                entryrights,
+                erepsaleos,
+                ereppurcos,
+                erepledger,
+                erepcoldlotwise,
+                erepcoldaccwise,
+                erepcoldstkwise,
+                efrmsaleorder,
+                erepsaleorder,
+                efrmsaleinvoice,
+                erepsaleinvoice,
+                accId,
+                accname,
+                accEmail,
+                accpwd,
+                acctype,
+                accrights,
+                arepsaleos,
+                areppurcos,
+                arepledger,
+                arepcoldlotwise,
+                arepcoldaccwise,
+                arepcoldstkwise,
+                afrmsaleorder,
+                arepsaleorder,
+                afrmsaleinvoice,
+                arepsaleinvoice,
+              } = data;
+              tx.executeSql(
+                `INSERT INTO users (entryId, userid, entryName, entryEmail, entryPwd, compdbname, entryrights, erepsaleos, ereppurcos, erepledger, erepcoldlotwise, erepcoldaccwise, erepcoldstkwise, efrmsaleorder, erepsaleorder, efrmsaleinvoice, erepsaleinvoice, accId, accname, accEmail, accpwd, acctype, accrights, arepsaleos, areppurcos, arepledger, arepcoldlotwise, arepcoldaccwise, arepcoldstkwise, afrmsaleorder, arepsaleorder, afrmsaleinvoice, arepsaleinvoice) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                  entryId,
+                  userid,
+                  entryName,
+                  entryEmail,
+                  entryPwd,
+                  compdbname,
+                  entryrights,
+                  erepsaleos,
+                  ereppurcos,
+                  erepledger,
+                  erepcoldlotwise,
+                  erepcoldaccwise,
+                  erepcoldstkwise,
+                  efrmsaleorder,
+                  erepsaleorder,
+                  efrmsaleinvoice,
+                  erepsaleinvoice,
+                  accId,
+                  accname,
+                  accEmail,
+                  accpwd,
+                  acctype,
+                  accrights,
+                  arepsaleos,
+                  areppurcos,
+                  arepledger,
+                  arepcoldlotwise,
+                  arepcoldaccwise,
+                  arepcoldstkwise,
+                  afrmsaleorder,
+                  arepsaleorder,
+                  afrmsaleinvoice,
+                  arepsaleinvoice,
+                ],
+                (tx, results) => {
+                  if (results.rowsAffected > 0) {
+                    resolve(results.insertId);
+                  } else {
+                    reject(new Error(`Failed to insert: ${entryId}`));
                   }
                 },
               );
@@ -664,11 +769,20 @@ const AppReducer = createSlice({
     builder.addCase(GetLedgerFilterData.pending, state => {
       state.Loading = true;
     });
+    builder.addCase(GetLedgerFilterData.fulfilled, state => {
+      // state.Loading = false;
+    });
     builder.addCase(GetLedgerFilterData.rejected, state => {
       state.Loading = false;
     });
-    builder.addCase(GetLedgerFilterData.fulfilled, state => {
-      // state.Loading = false;
+    builder.addCase(GetColdList.pending, state => {
+      state.Loading = true;
+    });
+    builder.addCase(GetColdList.fulfilled, state => {
+      state.Loading = false;
+    });
+    builder.addCase(GetColdList.rejected, state => {
+      state.Loading = false;
     });
   },
 });

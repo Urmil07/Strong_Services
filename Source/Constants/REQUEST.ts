@@ -1,8 +1,9 @@
-import {Functions} from '@/Utils';
-import NetInfo from '@react-native-community/netinfo';
-import URL from './URL';
+import {Functions, logger} from '@/Utils';
+
 import Axios from 'axios';
+import NetInfo from '@react-native-community/netinfo';
 import {REQUESTProp} from '@/Interfaces/API';
+import URL from './URL';
 
 const REQUEST = async ({
   Method,
@@ -22,7 +23,7 @@ const REQUEST = async ({
     });
   } else {
     Functions.ALERT({
-      Title: 'Error fetching',
+      Title: 'No connection',
       Text: 'Please check your internet connection.',
     });
     return;
@@ -45,7 +46,7 @@ const ApiCalling = async ({
     data: Params,
     url: URL.BaseUrl + EndPoint,
   };
-  console.log('options', options);
+  logger.log('options', options);
   const response = await Axios(options);
   return response.data;
 };

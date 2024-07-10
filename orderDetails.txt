@@ -1,0 +1,96 @@
+
+
+
+HideField 1 hoy tyare qty enable and hide pck and pcs 
+HideField 0 hoy tyare qty disable 
+packper as pac
+
+
+inclusive hoy tyare salerate as mstrate and rate na field formula use karvu 
+je rate male tene qty sathe multi karvu ane amt ma mukvu
+
+multi thayel rate mathi dis minus karvu and pachi rate plus karvu ane gamt add 
+
+
+pcs = 1 
+pac = 30 
+qty = pcs * pac
+
+
+inclusive 
+
+salerate 100 
+
+mastRate = 100 
+rate = 100/1.18 (84.75) (mastRate  / (((sgst + cgst +igst) +100)/100)  )
+qty = 1
+
+(
+    rateperunit hoy tyare
+unitrate =  rate / rateperunit  (100/12 = 8.33)
+amt = qty * unitrate (30 * 8.33 = 249.9)
+)
+
+amt = 84.75
+Dis1amt = amt * disc  [84.75 * 10 / 100 ] (8.48) disable rakhvu
+GstGamt = amt - Dis1amt - Dis2amt ( 84.75 - 8.48 = 76.27 )
+Gamt = GstGamt + (GstGamt * (sgstper + csgtper)/100) (76.27 *18/100 = 13.73) [76.27 +13.73 = 90] value(90)
+
+
+
+rateperunit hoy tyare 
+
+salerate 100 
+rateperunit 12
+qty 30
+
+
+
+
+exclusive
+
+salerate 100 
+
+mastRate = 100  (salerate)
+rate = 100 (mastRate)
+qty = 1
+
+(
+    rateperunit hoy tyare
+unitrate =  rate / rateperunit  (100/12 = 8.33)
+amt = qty * unitrate (30 * 8.33 = 249.9)
+)
+
+amt = 100
+Dis1amt = amt * disc  [100 * 10 / 100 ] (10) disable rakhvu
+GstGamt = amt - Dis1amt - Dis2amt ( 100 - 10 - 0 = 90 )
+Gamt = GstGamt + (GstGamt * (sgstper + csgtper)/100) (90 * 18 / 100 = 16.2) [90 +16.2 = 106.2] value(106.2)
+
+
+
+total
+Total amount = amt nu total 
+dis1 ,dis2, gstgamt
+sgst, cgst, igst
+final amt = gamt nu total
+
+
+1.
+TAMT
+DISC1 
+DISC2
+GSTGAMT
+
+2.
+SGST
+CGST
+IGST
+FINALAMT
+
+
+disc1 and disc2 ma per batavu
+
+mastrate and rate 99999.9999
+disc1 disc2 sgst cgst igst  99.99
+
+pcs pac qty 99999.999

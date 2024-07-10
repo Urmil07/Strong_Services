@@ -1,54 +1,43 @@
 import Animated, {
-  SlideInUp,
-  SlideOutUp,
+  SlideInRight,
+  SlideOutLeft,
   ZoomIn,
   ZoomOut,
 } from 'react-native-reanimated';
+import {Button, Dialog, Menu, Portal} from 'react-native-paper';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import {Colors, FontFamily, FontSize, width} from '@Constants';
+import {CompanyCard, ShortingDilog} from 'CApp';
 import {
-  Colors,
-  FontFamily,
-  FontSize,
-  Images,
-  isAndroid,
-  width,
-} from '@Constants';
-import {CompanyCard, DatePickerModal} from 'CApp';
-import {
-  FlatList,
-  Pressable,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+  Directions,
+  Gesture,
+  GestureDetector,
+} from 'react-native-gesture-handler';
+import {FlatList, Pressable, StyleSheet, View} from 'react-native';
 import {
   GetCompanys,
-  GetSaleOS,
-  SetApplyFilter,
-  SetFilterEndDate,
-  SetFilterList,
-  SetFilterStartDate,
-  SetLoading,
-  SetOSCompny,
-} from 'Reducers';
+  GetOSData,
+  setFilterOSList,
+  setLoading,
+  setOSCompny,
+  useAppStore,
+  useReportStore,
+} from '@Actions';
 import {RNCNodata, RNCText} from 'Common';
-import React, {useCallback, useEffect, useState} from 'react';
-import dayjs, {Dayjs} from 'dayjs';
-import {useAppDispatch, useAppSelector} from '@ReduxHook';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 
-import {DateType} from 'react-native-ui-datepicker';
-import FastImage from 'react-native-fast-image';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import FontAwesome6Icon from 'react-native-vector-icons/FontAwesome6';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {OSListScreenPageProps} from '@/Interfaces/AppStackParamList';
 import Zocial from 'react-native-vector-icons/Zocial';
 import normalize from 'react-native-normalize';
-import {setDate} from '@Utils';
 import {useIsFocused} from '@react-navigation/native';
 
 const OrderBy = [
@@ -57,91 +46,100 @@ const OrderBy = [
   {label: 'Date', value: 'date'},
 ];
 
-const OSListScreen = ({navigation, route}: OSListScreenPageProps) => {
+const OSListScreen: FC<OSListScreenPageProps> = ({navigation, route}) => {
   const {type} = route.params;
-  const dispatch = useAppDispatch();
-  const {
-    FilterCompany,
-    FilterList,
-    MastList,
-    ApplyFilter,
-    FilterStartDate,
-    FilterEndDate,
-  } = useAppSelector(({DBReducer}) => DBReducer);
-  const {UserRights} = useAppSelector(({AppReducer}) => AppReducer);
-  const focused = useIsFocused();
   const ref = React.useRef<ICarouselInstance>(null);
 
+  const {FilterCompany, MastOSList, FilterOSList} = useReportStore();
+  const {UserRights} = useAppStore();
+
+  const [CompanyIndex, setCompanyIndex] = useState(0);
   const [ListOrder, setListOrder] = useState('name');
-  const [SearchEnable, setSearchEnable] = useState(false);
-  const [SearchText, setSearchText] = useState('');
-  const [Selected, setSelected] = useState(true);
-  const [data, setData] = React.useState([...new Array(6).keys()]);
-  const [OrderByVisible, setOrderByVisible] = useState(false);
-  const [DateVisible, setDateVisible] = useState(false);
-  const [DateType, setDateType] = useState<'start' | 'end'>('start');
-  const [DatePickerVisible, setDatePickerVisible] = useState<boolean>(false);
-  const [StartDate, setStartDate] = useState<Dayjs | undefined>();
-  const [EndDate, setEndDate] = useState<Dayjs | undefined>();
-  const [DateSelected, setDateSelected] = useState<Dayjs | undefined>();
+  const [visible, setVisible] = React.useState(false);
+
+  const handleMenu = () => setVisible(!visible);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: type == 'sale' ? 'Recivable' : 'Payable',
+      headerBackTitleVisible: false,
+      headerTransparent: false,
+      headerRight(props) {
+        return (
+          <View style={{flexDirection: 'row', gap: 10}}>
+            <Pressable
+              style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                paddingHorizontal: normalize(5),
+              }}
+              onPress={() =>
+                navigation.navigate('OSListFilter', {type, ListOrder})
+              }>
+              <FontAwesome5
+                name="filter"
+                size={normalize(20)}
+                color={Colors.WText}
+              />
+            </Pressable>
+            <Pressable
+              style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                paddingHorizontal: normalize(5),
+              }}
+              // onPress={() => setOrderByVisible(!OrderByVisible)}
+              onPress={handleMenu}>
+              <FontAwesome5
+                name="sort-alpha-up"
+                size={normalize(20)}
+                color={Colors.WText}
+              />
+            </Pressable>
+          </View>
+        );
+      },
+    });
+  }, [navigation]);
 
   useEffect(() => {
-    if (focused && ApplyFilter) {
-      FetchData();
-      dispatch(SetApplyFilter(false));
-    }
-  }, [focused]);
+    navigation.setOptions({
+      headerSearchBarOptions: {
+        shouldShowHintSearchIcon: true,
+        headerIconColor: Colors.WText,
+        textColor: Colors.WText,
+        tintColor: Colors.WText,
+        onChangeText(e) {
+          handleSearch(e.nativeEvent.text);
+        },
+      },
+    });
+  }, [navigation, MastOSList, FilterOSList]);
 
   useEffect(() => {
-    dispatch(GetCompanys({type}));
+    setLoading(true);
+    GetCompanys({type});
+    setLoading(false);
   }, []);
 
   useEffect(() => {
     FetchData();
-  }, [ListOrder, FilterStartDate, FilterEndDate, FilterCompany]);
-
-  useEffect(() => {
-    const DefaultDate = async () => {
-      const Date = await setDate();
-      if (FilterStartDate) {
-        setStartDate(dayjs(FilterStartDate));
-        console.log('FilterStartDate', FilterStartDate);
-      } else {
-        // setStartDate(dayjs(Date.StartDate));
-        // console.log('Date', Date);
-      }
-
-      if (FilterEndDate) {
-        setEndDate(dayjs(FilterEndDate));
-        console.log('FilterEndDate', FilterEndDate);
-      } else {
-        // setEndDate(dayjs(Date.EndDate));
-        // console.log('Date EndDate', Date);
-      }
-    };
-    DefaultDate();
-  }, []);
+  }, [ListOrder, FilterCompany]);
 
   const FetchData = useCallback(() => {
     if (FilterCompany.length > 0) {
-      dispatch(GetSaleOS({type, Orderby: ListOrder}))
-        .unwrap()
-        .then(() => {
-          return new Promise<void>((resolve, reject) => {
-            setTimeout(() => {
-              dispatch(SetLoading(false));
-              resolve();
-            }, 500);
-          });
-        });
+      setLoading(true);
+      GetOSData({type, Orderby: ListOrder});
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
-  }, [ListOrder, FilterStartDate, FilterEndDate, FilterCompany]);
+  }, [ListOrder, FilterCompany]);
 
   const handleSearch = (query: string) => {
-    setSearchText(query);
     const queryWords = query.toLowerCase().split(' ');
 
-    const filteredResults = MastList.filter(item => {
+    const filteredResults = MastOSList.filter(item => {
       const city = item.cityname.toLowerCase();
 
       const name =
@@ -152,7 +150,8 @@ const OSListScreen = ({navigation, route}: OSListScreenPageProps) => {
         word => name.includes(word) || city.includes(word),
       );
     });
-    dispatch(SetFilterList(filteredResults));
+
+    setFilterOSList(filteredResults);
   };
 
   const {format} = new Intl.NumberFormat('hi-IN', {
@@ -162,8 +161,8 @@ const OSListScreen = ({navigation, route}: OSListScreenPageProps) => {
 
   const handleCompany = (id: number) => {
     if (!id) return;
-    dispatch(SetOSCompny(id));
-    console.log('id', id);
+    setOSCompny(id);
+    FetchData();
   };
 
   const baseOptions = {
@@ -172,312 +171,253 @@ const OSListScreen = ({navigation, route}: OSListScreenPageProps) => {
     height: normalize(80),
   } as const;
 
-  const handleDate = ({date}: {date: DateType}) => {
-    console.log('date', date);
-    setDateSelected(dayjs(date));
-    if (DateType === 'start') {
-      dispatch(SetFilterStartDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss')));
-      setStartDate(dayjs(date));
-    }
-    if (DateType === 'end') {
-      dispatch(SetFilterEndDate(dayjs(date).format('YYYY-MM-DD HH:mm:ss')));
-      setEndDate(dayjs(date));
-    }
-    setDatePickerVisible(false);
+  const onContinue = () => {
+    const isLastScreen = CompanyIndex === FilterCompany.length - 1;
+    if (isLastScreen) setCompanyIndex(0);
+    else setCompanyIndex(CompanyIndex + 1);
   };
 
+  const onBack = () => {
+    const isFirstScreen = CompanyIndex === 0;
+    if (isFirstScreen) setCompanyIndex(0);
+    else setCompanyIndex(CompanyIndex - 1);
+  };
+
+  const swipes = Gesture.Simultaneous(
+    Gesture.Fling().direction(Directions.LEFT).onEnd(onContinue),
+    Gesture.Fling().direction(Directions.RIGHT).onEnd(onBack),
+  );
+
   return (
-    <View style={{flex: 1}}>
-      <SafeAreaView style={{backgroundColor: Colors.header}} />
-      <StatusBar backgroundColor={Colors.header} />
-      <DatePickerModal
-        visible={DatePickerVisible}
-        handleChange={handleDate}
-        value={DateSelected}
-        setVisible={setDatePickerVisible}
-      />
-
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          backgroundColor: Colors.header,
-          paddingVertical: isAndroid ? normalize(17) : normalize(8),
-        }}>
-        {SearchEnable ? (
-          <View
-            style={{
-              // width: '60%',
-              padding: normalize(6),
-              paddingHorizontal: normalize(15),
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-              flex: 1,
-            }}>
-            <TextInput
-              style={{
-                color: Colors.WText,
-                fontFamily: FontFamily.Medium,
-                fontSize: FontSize.font14,
-                borderBottomColor: Colors.White,
-                borderBottomWidth: StyleSheet.hairlineWidth,
-                flex: 1,
-                padding: normalize(5),
-                backgroundColor: Colors.card,
-                borderRadius: 4,
-              }}
-              value={SearchText}
-              onChangeText={handleSearch}
-              placeholder="Search"
-              placeholderTextColor={Colors.White}
-              autoFocus
-            />
-            <Pressable
-              style={{
-                backgroundColor: Colors.card,
-                padding: 5,
-                borderRadius: 4,
-              }}
-              onPress={() => handleSearch('')}>
-              <RNCText color={Colors.WText}>Clear</RNCText>
-            </Pressable>
-            <Pressable
-              onPress={() => setSearchEnable(!SearchEnable)}
-              style={{
-                backgroundColor: Colors.card,
-                padding: 5,
-                borderRadius: 4,
-              }}>
-              <RNCText color={Colors.WText}>Close</RNCText>
-
-              {/* <FontAwesome6Icon
-                name="xmark"
-                color={Colors.WText}
-                size={normalize(18)}
-              /> */}
-            </Pressable>
-          </View>
-        ) : (
-          <>
-            <View
-              style={{
-                alignItems: 'center',
-                flexDirection: 'row',
-                // gap: 10,
-                left: normalize(15),
-              }}>
-              <Pressable
-                style={{padding: normalize(10), borderRadius: 100}}
-                onPress={() => navigation.goBack()}>
-                <FontAwesome6Icon
-                  name="chevron-left"
-                  size={normalize(20)}
-                  color={Colors.WText}
-                />
-              </Pressable>
-              <RNCText
-                family={FontFamily.SemiBold}
-                size={FontSize.font18}
-                color={Colors.WText}>
-                {type == 'sale' ? 'Recivable' : 'Payable'}
-              </RNCText>
-            </View>
-            <View
-              style={{padding: normalize(10), flexDirection: 'row', gap: 4}}>
-              <Pressable
-                style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  paddingHorizontal: normalize(5),
-                }}
-                onPress={() => setSearchEnable(!SearchEnable)}>
-                <FontAwesome5
-                  name="search"
-                  size={normalize(20)}
-                  color={Colors.WText}
-                />
-              </Pressable>
-              <Pressable
-                style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  paddingHorizontal: normalize(5),
-                }}
-                onPress={() => navigation.navigate('OSListFilter', {type})}>
-                <FontAwesome5
-                  name="filter"
-                  size={normalize(20)}
-                  color={Colors.WText}
-                />
-              </Pressable>
-              <Pressable
-                style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  paddingHorizontal: normalize(5),
-                }}
-                onPress={() => setDateVisible(!DateVisible)}>
-                <Ionicons
-                  name="calendar"
-                  size={normalize(20)}
-                  color={Colors.WText}
-                />
-              </Pressable>
-              <Pressable
-                style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  paddingHorizontal: normalize(5),
-                }}
-                onPress={() => setOrderByVisible(!OrderByVisible)}>
-                <FontAwesome5
-                  name="sort-alpha-up"
-                  size={normalize(20)}
-                  color={Colors.WText}
-                />
-                {OrderByVisible && (
-                  <Animated.View
-                    entering={ZoomIn.duration(200)}
-                    exiting={ZoomOut.duration(200)}
-                    style={{
-                      position: 'absolute',
-                      width: normalize(120),
-                      backgroundColor: Colors.header,
-                      top: normalize(25),
-                      right: 0,
-                      borderRadius: 12,
-                      zIndex: 1,
-                      overflow: 'hidden',
-                    }}>
-                    {OrderBy.map((item, index) => (
-                      <Pressable
-                        key={index}
-                        style={[
-                          {
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: normalize(10),
-                            // backgroundColor: Colors.E855555,
-                            borderBottomColor: Colors.Black,
-                            borderBottomWidth: StyleSheet.hairlineWidth,
-                          },
-                          ListOrder == item.value && {
-                            backgroundColor: Colors.backgroundSecondary,
-                          },
-                        ]}
-                        onPress={() => {
-                          setListOrder(item.value);
-                          setOrderByVisible(false);
-                        }}>
-                        <RNCText
-                          family={FontFamily.SemiBold}
-                          color={
-                            ListOrder == item.value
-                              ? Colors.Black
-                              : Colors.WText
-                          }>
-                          {item.label}
-                        </RNCText>
-                      </Pressable>
-                    ))}
-                  </Animated.View>
-                )}
-              </Pressable>
-            </View>
-          </>
-        )}
-      </View>
-
-      <View
-        style={{
-          flex: 1,
-          padding: normalize(10),
-          gap: 5,
-          zIndex: -1,
-        }}>
-        {DateVisible && (
-          <Animated.View
-            entering={SlideInUp.duration(200)}
-            exiting={SlideOutUp.duration(200)}
-            style={{flexDirection: 'row', gap: 10}}>
-            <View style={styles.DateContainer}>
-              <RNCText
-                style={styles.DateTitle}
-                family={FontFamily.Medium}
-                size={FontSize.font12}>
-                From Date:
-              </RNCText>
-              <Pressable
-                style={styles.dateInput}
-                onPress={() => {
-                  setDateSelected(StartDate);
-                  setDateType('start');
-                  setDatePickerVisible(true);
-                }}>
-                <RNCText size={FontSize.font12}>
-                  {StartDate ? StartDate?.format('DD/MM/YYYY') : '--/--/----'}
-                </RNCText>
-                <Ionicons
-                  name="calendar"
-                  size={normalize(20)}
-                  color={Colors.Black}
-                />
-              </Pressable>
-            </View>
-            <View style={styles.DateContainer}>
-              <RNCText
-                style={styles.DateTitle}
-                size={FontSize.font12}
-                family={FontFamily.Medium}>
-                To Date:
-              </RNCText>
-              <Pressable
-                style={styles.dateInput}
-                onPress={() => {
-                  setDateSelected(EndDate);
-                  setDateType('end');
-                  setDatePickerVisible(true);
-                }}>
-                <RNCText size={FontSize.font12}>
-                  {EndDate ? EndDate?.format('DD/MM/YYYY') : '--/--/----'}
-                </RNCText>
-                <Ionicons
-                  name="calendar"
-                  size={normalize(20)}
-                  color={Colors.Black}
-                />
-              </Pressable>
-            </View>
-          </Animated.View>
-        )}
-
-        <Carousel
-          {...baseOptions}
-          loop={false}
-          ref={ref}
-          style={{width: '100%', marginBottom: normalize(4)}}
-          data={FilterCompany}
-          pagingEnabled={true}
-          onSnapToItem={index => console.log('current index:', index)}
-          renderItem={({item, index}) => (
-            <View style={{flex: 1, marginLeft: '2.5%', alignItems: 'center'}}>
+    <View style={styles.page}>
+      {FilterCompany.length &&
+      (UserRights == 'Owner' || UserRights == 'Agent') ? (
+        <View style={{gap: 6}}>
+          <GestureDetector gesture={swipes}>
+            <Animated.View
+              style={{alignItems: 'center'}}
+              entering={SlideInRight}
+              exiting={SlideOutLeft}
+              key={CompanyIndex}>
               <CompanyCard
                 onPress={handleCompany}
-                id={item.compid}
-                name={item.compyearname}
-                selected={item.selected}
-                total={item.totalBillAmt}
+                id={FilterCompany[CompanyIndex].compid}
+                name={FilterCompany[CompanyIndex].compyearname}
+                selected={FilterCompany[CompanyIndex].selected}
+                total={FilterCompany[CompanyIndex].totalBillAmt}
               />
-            </View>
-          )}
-        />
+            </Animated.View>
+          </GestureDetector>
+          <View style={{justifyContent: 'center', alignItems: 'center'}}>
+            {FilterCompany.map((item, index) => {
+              return (
+                <View
+                  style={{
+                    height: normalize(10),
+                    width: normalize(10),
+                    backgroundColor:
+                      index == CompanyIndex ? Colors.primary : Colors.secondary,
+                    borderRadius: 100,
+                  }}
+                  key={index}
+                />
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+
+      <FlatList
+        // data={[]}
+        data={FilterOSList}
+        showsVerticalScrollIndicator={false}
+        renderItem={({item, index}) => {
+          return (
+            <Pressable
+              style={{
+                // backgroundColor: Colors.White + '80',
+                backgroundColor: Colors.backgroundSecondary,
+                paddingVertical: normalize(6),
+                paddingHorizontal: normalize(8),
+                borderRadius: 4,
+                justifyContent: 'center',
+              }}
+              onPress={() =>
+                navigation.navigate('OSData', {
+                  accid: item.accid,
+                  compid: item.compid,
+                  city: item.cityname,
+                  area: item.areaname,
+                  mobile: item.mobile,
+                  partyName:
+                    UserRights == 'Client' ? item.compname : item.accname,
+                  type,
+                })
+              }>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                <View style={{width: '70%', gap: 3}}>
+                  <RNCText
+                    numberOfLines={2}
+                    family={FontFamily.Bold}
+                    size={FontSize.font11}>
+                    {UserRights == 'Client' ? item.compname : item.accname}
+                  </RNCText>
+                  {UserRights !== 'Client' && (
+                    <>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          gap: 5,
+                          alignItems: 'center',
+                        }}>
+                        <MaterialCommunityIcons
+                          name="home-city"
+                          size={normalize(12)}
+                          color={Colors.Black}
+                        />
+                        <RNCText size={FontSize.font10} numberOfLines={1}>
+                          {item.cityname}
+                        </RNCText>
+                      </View>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                        }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            gap: 5,
+                            alignItems: 'center',
+                            width: '53%',
+                          }}>
+                          <FontAwesome
+                            name="user-circle-o"
+                            size={normalize(12)}
+                            color={Colors.Black}
+                          />
+                          <RNCText size={FontSize.font10}>
+                            {item.areaname}
+                          </RNCText>
+                        </View>
+
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            gap: 5,
+                            alignItems: 'center',
+                            width: '45%',
+                          }}>
+                          <Zocial
+                            name="call"
+                            size={normalize(12)}
+                            color={Colors.Black}
+                          />
+
+                          <RNCText size={FontSize.font10}>
+                            {item.mobile}
+                          </RNCText>
+                        </View>
+                      </View>
+                    </>
+                  )}
+                </View>
+                <View style={{width: '30%', alignItems: 'flex-end'}}>
+                  <RNCText family={FontFamily.Bold} size={FontSize.font12}>
+                    {format(Number(item.totalbill))}
+                  </RNCText>
+                </View>
+              </View>
+            </Pressable>
+          );
+        }}
+        // style={{flex: 1}}
+        contentContainerStyle={{gap: 5}}
+        ListEmptyComponent={RNCNodata}
+      />
+      <Portal>
+        <Dialog
+          visible={visible}
+          onDismiss={handleMenu}
+          style={{
+            backgroundColor: Colors.header,
+            width: normalize(250),
+            alignSelf: 'center',
+            borderRadius: 8,
+          }}>
+          <Dialog.Content style={{gap: 5}}>
+            {OrderBy.map((order, index) => (
+              <Pressable
+                style={{
+                  backgroundColor:
+                    ListOrder == order.value
+                      ? Colors.background
+                      : Colors.backgroundSecondary,
+                  padding: normalize(10),
+                  borderRadius: 5,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => {
+                  setListOrder(order.value);
+                  handleMenu();
+                }}
+                key={index}>
+                <RNCText>{order.label}</RNCText>
+              </Pressable>
+            ))}
+          </Dialog.Content>
+        </Dialog>
+      </Portal>
+    </View>
+  );
+  return (
+    <View style={{flex: 1}}>
+      <View
+        style={{
+          // flex: 1,
+          padding: normalize(10),
+          gap: 5,
+          // zIndex: -1,
+        }}>
+        {UserRights == 'Owner' || UserRights == 'Agent' ? (
+          <Carousel
+            {...baseOptions}
+            loop={false}
+            ref={ref}
+            style={{width: '100%', marginBottom: normalize(4)}}
+            data={FilterCompany}
+            pagingEnabled={true}
+            onSnapToItem={index => console.log('current index:', index)}
+            renderItem={({item, index}) => (
+              <View
+                style={{
+                  flex: 1,
+                  marginLeft: '2.5%',
+                  alignItems: 'center',
+                }}>
+                <CompanyCard
+                  onPress={handleCompany}
+                  id={item.compid}
+                  name={item.compyearname}
+                  selected={item.selected}
+                  total={item.totalBillAmt}
+                />
+              </View>
+            )}
+          />
+        ) : null}
+
+        {/* <ShortingDilog visible={visible} handleMenu={handleMenu} /> */}
 
         <FlatList
           // data={[]}
-          data={FilterList}
+          data={FilterOSList}
           showsVerticalScrollIndicator={false}
           renderItem={({item, index}) => {
             return (
@@ -513,54 +453,67 @@ const OSListScreen = ({navigation, route}: OSListScreenPageProps) => {
                       numberOfLines={2}
                       family={FontFamily.Bold}
                       size={FontSize.font11}>
-                      {item.accname}
+                      {UserRights == 'Client' ? item.compname : item.accname}
                     </RNCText>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        gap: 5,
-                        alignItems: 'center',
-                      }}>
-                      <MaterialCommunityIcons
-                        name="home-city"
-                        size={normalize(12)}
-                        color={Colors.Black}
-                      />
-                      <RNCText size={FontSize.font10} numberOfLines={1}>
-                        {item.cityname}
-                      </RNCText>
-                    </View>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        gap: 5,
-                        alignItems: 'center',
-                      }}>
-                      <FontAwesome
-                        name="user-circle-o"
-                        size={normalize(12)}
-                        color={Colors.Black}
-                      />
-                      <RNCText size={FontSize.font10} numberOfLines={1}>
-                        {item.areaname}
-                      </RNCText>
-                    </View>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        gap: 5,
-                        alignItems: 'center',
-                      }}>
-                      <Zocial
-                        name="call"
-                        size={normalize(12)}
-                        color={Colors.Black}
-                      />
+                    {UserRights !== 'Client' && (
+                      <>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            gap: 5,
+                            alignItems: 'center',
+                          }}>
+                          <MaterialCommunityIcons
+                            name="home-city"
+                            size={normalize(12)}
+                            color={Colors.Black}
+                          />
+                          <RNCText size={FontSize.font10} numberOfLines={1}>
+                            {item.cityname}
+                          </RNCText>
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                          }}>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              gap: 5,
+                              alignItems: 'center',
+                              width: '53%',
+                            }}>
+                            <FontAwesome
+                              name="user-circle-o"
+                              size={normalize(12)}
+                              color={Colors.Black}
+                            />
+                            <RNCText size={FontSize.font10}>
+                              {item.areaname}
+                            </RNCText>
+                          </View>
 
-                      <RNCText size={FontSize.font10} numberOfLines={1}>
-                        {item.mobile}
-                      </RNCText>
-                    </View>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              gap: 5,
+                              alignItems: 'center',
+                              width: '45%',
+                            }}>
+                            <Zocial
+                              name="call"
+                              size={normalize(12)}
+                              color={Colors.Black}
+                            />
+
+                            <RNCText size={FontSize.font10}>
+                              {item.mobile}
+                            </RNCText>
+                          </View>
+                        </View>
+                      </>
+                    )}
                   </View>
                   <View style={{width: '30%', alignItems: 'flex-end'}}>
                     <RNCText family={FontFamily.Bold} size={FontSize.font12}>
@@ -571,11 +524,45 @@ const OSListScreen = ({navigation, route}: OSListScreenPageProps) => {
               </Pressable>
             );
           }}
+          // style={{flex: 1}}
           contentContainerStyle={{gap: 5}}
-          style={{marginBottom: 10, flex: 1}}
           ListEmptyComponent={RNCNodata}
         />
       </View>
+      <Portal>
+        <Dialog
+          visible={visible}
+          onDismiss={handleMenu}
+          style={{
+            backgroundColor: Colors.header,
+            width: normalize(250),
+            alignSelf: 'center',
+            borderRadius: 8,
+          }}>
+          <Dialog.Content style={{gap: 5}}>
+            {OrderBy.map((order, index) => (
+              <Pressable
+                style={{
+                  backgroundColor:
+                    ListOrder == order.value
+                      ? Colors.background
+                      : Colors.backgroundSecondary,
+                  padding: normalize(10),
+                  borderRadius: 5,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => {
+                  setListOrder(order.value);
+                  handleMenu();
+                }}
+                key={index}>
+                <RNCText>{order.label}</RNCText>
+              </Pressable>
+            ))}
+          </Dialog.Content>
+        </Dialog>
+      </Portal>
     </View>
   );
 };
@@ -583,6 +570,7 @@ const OSListScreen = ({navigation, route}: OSListScreenPageProps) => {
 export default OSListScreen;
 
 const styles = StyleSheet.create({
+  page: {flex: 1, padding: normalize(10), gap: 10},
   dateInput: {
     borderColor: Colors.card,
     borderWidth: StyleSheet.hairlineWidth,

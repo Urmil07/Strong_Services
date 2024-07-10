@@ -10,7 +10,7 @@ import normalize from 'react-native-normalize';
 
 interface DatePickerModalProps {
   visible: boolean;
-  value: Dayjs | undefined;
+  value: Dayjs;
   handleChange: (params: {date: DateType}) => void;
   setVisible: (visible: boolean) => void;
 }
@@ -21,17 +21,6 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({
   handleChange,
   setVisible,
 }) => {
-  const [date, setDate] = useState(dayjs());
-  const [MinDate, setMinDate] = useState<Dayjs>();
-  const [MaxDate, setMaxDate] = useState<Dayjs>();
-
-  useEffect(() => {
-    const CurrentYear = Functions.getCurrentFinancialYear();
-    const Year = CurrentYear.split('-');
-    setMinDate(dayjs(`${Year[0]}-04-01`));
-    setMaxDate(dayjs(`${Year[1]}-03-31`));
-  }, []);
-
   if (visible)
     return (
       <TouchableWithoutFeedback onPress={() => setVisible(false)}>

@@ -1,11 +1,11 @@
-import {View, Text} from 'react-native';
-import React from 'react';
 import {
   NativeStackScreenProps,
   createNativeStackNavigator,
 } from '@react-navigation/native-stack';
-import {Colors, NavigationRoutes} from '@/Constants';
-import {Login, OTP} from 'Auth';
+
+import {Colors} from '@/Constants';
+import {Login} from 'Auth';
+import React from 'react';
 
 type AuthStackParamList = {
   LOGIN: undefined;
@@ -28,7 +28,6 @@ const AuthStack = () => {
         contentStyle: {backgroundColor: Colors.background},
       }}>
       <Stack.Screen name={'LOGIN'} component={Login} />
-      <Stack.Screen name={'OTP'} component={OTP} />
     </Stack.Navigator>
   );
 };
