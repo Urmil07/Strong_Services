@@ -235,3 +235,43 @@ export interface Datausermst {
   taxon: string;
   statename: string;
 }
+
+export interface Datasaleordermst {
+  AccID: number;
+  AccName: string;
+  AgentId: number;
+  AgentName: string;
+  Amt: number;
+  AreaName: string;
+  Areaid: null;
+  BooKId: null;
+  BooKName: string;
+  CGSTAMT: number;
+  CGSTPER: number;
+  CompId: number;
+  CompanyName: string;
+  Dis1amt: number;
+  Dis1per: number;
+  Dis2amt: number;
+  Dis2per: number;
+  Entryemail: string;
+  Gamt: number;
+  GstGamt: number;
+  IGSTAMT: number;
+  IGSTPER: number;
+  ItemGrpname: string;
+  ItemId: number;
+  ItemName: string;
+  MstRate: number;
+  OrdDate: string;
+  OrdNo: number;
+  Pac: number;
+  Pcs: number;
+  Qty: number;
+  Rate: number;
+  Rateperunit: number;
+  SGSTAMT: number;
+  SGSTPER: number;
+  UniqNumber: string;
+  isSYNC: number;
+}

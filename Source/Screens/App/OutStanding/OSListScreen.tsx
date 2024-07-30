@@ -281,7 +281,7 @@ const OSListScreen: FC<OSListScreenPageProps> = ({navigation, route}) => {
                           color={Colors.Black}
                         />
                         <RNCText size={FontSize.font10} numberOfLines={1}>
-                          {item.cityname}
+                          {item.cityname || '-'}
                         </RNCText>
                       </View>
                       <View
@@ -301,8 +301,10 @@ const OSListScreen: FC<OSListScreenPageProps> = ({navigation, route}) => {
                             size={normalize(12)}
                             color={Colors.Black}
                           />
-                          <RNCText size={FontSize.font10}>
-                            {item.areaname}
+                          <RNCText
+                            size={FontSize.font10}
+                            style={{width: '85%'}}>
+                            {item.areaname || '-'}
                           </RNCText>
                         </View>
 
@@ -320,7 +322,7 @@ const OSListScreen: FC<OSListScreenPageProps> = ({navigation, route}) => {
                           />
 
                           <RNCText size={FontSize.font10}>
-                            {item.mobile}
+                            {item.mobile || '-'}
                           </RNCText>
                         </View>
                       </View>

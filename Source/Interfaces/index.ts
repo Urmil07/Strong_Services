@@ -18,5 +18,6 @@ export type {
   Datapurco,
   Datasaleo,
   Datausermst,
+  Datasaleordermst,
   EstrongReportInterface,
 } from './ReportInterface';

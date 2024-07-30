@@ -58,6 +58,8 @@ export {
   setBooknames,
   setCompanies,
   setParty,
+  sycOrders,
+  getUniqOrder,
 } from './Saleaction';
 
 export {

@@ -3,7 +3,6 @@ import DatePickerModal from './DatePickerModal';
 import Drawer from './Drawer';
 import LedgerView from './Ledger/LedgerView';
 import OSView from './OutStanding/OSView';
-import OrderCard from './sale/OrderCard';
 import ShortingDilog from './ShortingDilog';
 import StockSummView from './Cold/StockSummView';
 
@@ -15,5 +14,4 @@ export {
   Drawer,
   StockSummView,
   ShortingDilog,
-  OrderCard,
 };

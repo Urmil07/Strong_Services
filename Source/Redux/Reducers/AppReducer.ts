@@ -17,6 +17,7 @@ import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {EstrongReportInterface} from '@/Interfaces/ReportInterface';
 import {Estronglogin} from './LoginReducer';
 import {SQLiteDatabase} from 'react-native-sqlite-storage';
+import {logger} from '@Utils';
 
 interface State {
   Loading: boolean;
@@ -38,6 +39,7 @@ export const EstrongReport = createAsyncThunk(
         EndPoint: URL.EstrongReport,
         Params: {entryemail: EntryEmail, accid: AccId},
       });
+      logger.log('response', response);
       if (response.status !== 200) {
         throw new Error(response.message);
       }

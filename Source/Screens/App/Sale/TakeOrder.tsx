@@ -1,22 +1,26 @@
-import {Colors, FontFamily, FontSize, isIOS} from '@Constants';
+import {Colors, FontFamily, FontSize} from '@Constants';
 import {
   FlatList,
   Keyboard,
-  KeyboardAvoidingView,
   Pressable,
-  ScrollView,
   StyleSheet,
   TextInput,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import {Functions, logger, useGetUserDetails, useKeyboard} from '@Utils';
 import {RNCButton, RNCDropdown, RNCText} from 'Common';
-import React, {FC, useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import {
   getItemList,
+  getUniqOrder,
   getUserInfo,
-  setOrderValue,
+  setLoading,
   setToast,
   useAppStore,
   useHomeStore,
@@ -26,7 +30,6 @@ import {
 
 import {Datausermst} from '@/Interfaces/ReportInterface';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {OrderCard} from 'CApp';
 import {OrderProp} from '@Interfaces';
 import {TakeOrderPageProps} from '@/Interfaces/AppStackParamList';
 import dayjs from 'dayjs';
@@ -45,8 +48,6 @@ type TotalType = {
 };
 
 const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
-  const isKeyboardVisible = useKeyboard();
-  const {getDetails} = useGetUserDetails();
   const {
     accid,
     accname,
@@ -58,8 +59,13 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
     agentid,
     agentname,
     flg,
+    UniqNumber,
+    OrdNo,
+    Entryemail,
+    OrdDate,
   } = route.params;
-
+  const {getDetails} = useGetUserDetails();
+  const {ItemList} = useOrderStore();
   const {UserRights} = useAppStore();
   const {ActiveUser} = useHomeStore();
   const {User} = usePrivilegesStore(state => ({
@@ -92,6 +98,7 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
       gamt: '',
     },
   ]);
+
   const [Total, setTotal] = useState<TotalType>({
     amt: 0,
     disc1amt: 0,
@@ -108,6 +115,8 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
     currency: 'INR',
   });
 
+  const isKeyboardVisible = useKeyboard();
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: true,
@@ -120,40 +129,42 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
       headerBackTitleVisible: false,
       headerRight(props) {
         return (
-          <Pressable
-            onPress={() => {
-              const newData = {
-                itemid: '',
-                itemName: '',
-                itemGrpname: '',
-                pcs: '',
-                pac: '',
-                qty: '',
-                mstrate: '',
-                rate: '',
-                rateperunit: '',
-                amt: '',
-                disc1per: '',
-                disc1amt: '',
-                disc2per: '',
-                disc2amt: '',
-                sgstper: '',
-                sgstamt: '',
-                cgstper: '',
-                cgstamt: '',
-                igstper: '',
-                igstamt: '',
-                gstgamt: '',
-                gamt: '',
-              };
-              setOrderList(prevOrderList => [...prevOrderList, newData]);
-            }}>
-            <Ionicons
-              name="add-circle-sharp"
-              size={normalize(25)}
-              color={Colors.WText}
-            />
-          </Pressable>
+          flg !== 1 && (
+            <Pressable
+              onPress={() => {
+                const newData = {
+                  itemid: '',
+                  itemName: '',
+                  itemGrpname: '',
+                  pcs: '',
+                  pac: '',
+                  qty: '',
+                  mstrate: '',
+                  rate: '',
+                  rateperunit: '',
+                  amt: '',
+                  disc1per: '',
+                  disc1amt: '',
+                  disc2per: '',
+                  disc2amt: '',
+                  sgstper: '',
+                  sgstamt: '',
+                  cgstper: '',
+                  cgstamt: '',
+                  igstper: '',
+                  igstamt: '',
+                  gstgamt: '',
+                  gamt: '',
+                };
+                setOrderList(prevOrderList => [...prevOrderList, newData]);
+              }}>
+              <Ionicons
+                name="add-circle-sharp"
+                size={normalize(25)}
+                color={Colors.WText}
+              />
+            </Pressable>
+          )
         );
       },
     });
@@ -162,6 +173,19 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
   useEffect(() => {
     getItemList();
     getUserInfo({accId: accid});
+  }, []);
+
+  useEffect(() => {
+    if (flg !== 0) {
+      GetUniqOrder();
+    }
+  }, []);
+
+  const GetUniqOrder = useCallback(async () => {
+    if (UniqNumber) {
+      const data: OrderProp[] | undefined = await getUniqOrder({UniqNumber});
+      if (data && data.length) setOrderList(data);
+    }
   }, []);
 
   useEffect(() => {
@@ -204,8 +228,8 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
     value: any;
     index: number;
   }) => {
-    console.log('value', value);
-    console.log('fieldName', fieldName);
+    // console.log('value', value);
+    // console.log('fieldName', fieldName);
     // return;
     // console.log('User', User);
     const isSameState = User.statename == ActiveUser?.statename;
@@ -214,44 +238,42 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
     logger.log('value', value);
 
     if (fieldName === 'item') {
-      Order[index].amt = '';
-      Order[index].cgstamt = '';
+      Order[index].amt = '0';
+      Order[index].cgstamt = '0';
       Order[index].cgstper = value.cgstper ? String(value.cgstper) : '';
-      Order[index].disc1amt = '';
+      Order[index].disc1amt = '0';
       Order[index].disc1per = value.disc ? String(value.disc) : '';
-      Order[index].disc2amt = '';
-      Order[index].disc2per = '';
-      Order[index].gamt = '';
-      Order[index].gstgamt = '';
-      Order[index].igstamt = '';
-      Order[index].igstper = value.igstper ? String(value.igstper) : '';
+      Order[index].disc2amt = '0';
+      Order[index].disc2per = '0';
+      Order[index].gamt = '0';
+      Order[index].gstgamt = '0';
+      Order[index].igstamt = '0';
+      Order[index].igstper = value.igstper ? String(value.igstper) : '0';
       Order[index].itemGrpname = value.itemGrpname || '';
       Order[index].itemName = value.label || '';
       Order[index].itemid = value.value || '';
-      Order[index].mstrate = value.salerate ? String(value.salerate) : '';
+      Order[index].mstrate = value.salerate ? String(value.salerate) : '0';
       Order[index].pac = value.packper ? String(value.packper) : '';
       Order[index].pcs = '';
-      Order[index].qty = '';
-      Order[index].rate = '';
+      Order[index].qty = '0';
+      Order[index].rate = '0';
       Order[index].rateperunit = value.rateperunit
         ? String(value.rateperunit)
-        : '';
-      Order[index].sgstamt = '';
-      Order[index].sgstper = value.sgstper ? String(value.sgstper) : '';
+        : '0';
+      Order[index].sgstamt = '0';
+      Order[index].sgstper = value.sgstper ? String(value.sgstper) : '0';
     }
 
     if (fieldName == 'mstrate') Order[index].mstrate = value;
 
-    if (fieldName === 'pcs') {
-      Order[index].pcs = value;
-    }
+    if (fieldName === 'pcs') Order[index].pcs = value;
 
     if (fieldName === 'pac') Order[index].pac = value;
 
     if (fieldName === 'disc2per') {
       const amt = parseFloat(Order[index].amt);
       const disc1amt = parseFloat(Order[index].disc1amt);
-      const disc2per = parseFloat(value);
+      const disc2per = value ? parseFloat(value) : 0;
       let Disc2amt = 0;
 
       if (disc2per) Disc2amt = (amt - disc1amt) * (disc2per / 100);
@@ -275,22 +297,20 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
     const isSameState = User.statename == ActiveUser?.statename;
     const taxon = User.taxon;
     let qty = 0;
+    const pcs = parseFloat(Order.pcs) || '0';
+    const pac = parseFloat(Order.pac) || '0';
 
-    if (User.hidefield == '0')
-      qty = parseFloat(Order.pcs) * parseFloat(Order.pac);
+    if (User.hidefield == '0') qty = Number(pcs) * Number(pac);
     else qty = parseFloat(Order.qty);
 
-    const pcs = parseFloat(Order.pcs);
-    const pac = parseFloat(Order.pac);
+    // if (pac && pcs) qty = parseFloat(Order.pcs) * parseFloat(Order.pac);
 
-    if (pac && pcs) qty = parseFloat(Order.pcs) * parseFloat(Order.pac);
-
-    const sgstper = parseFloat(Order.sgstper) ?? 0;
-    const cgstper = parseFloat(Order.cgstper) ?? 0;
-    const igstper = parseFloat(Order.igstper) ?? 0;
-    const rateperunit = parseFloat(Order.rateperunit) ?? 0;
-    const disc1per = parseFloat(Order.disc1per) ?? 0;
-    const disc2per = parseFloat(Order.disc2per) ?? 0;
+    const sgstper = parseFloat(Order.sgstper);
+    const cgstper = parseFloat(Order.cgstper);
+    const igstper = parseFloat(Order.igstper);
+    const rateperunit = parseFloat(Order.rateperunit);
+    const disc1per = parseFloat(Order.disc1per);
+    const disc2per = parseFloat(Order.disc2per);
 
     let rate;
     let gstPer;
@@ -348,196 +368,279 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
 
     Orders[index].amt = amt.toFixed(2);
     Orders[index].cgstamt = cgstamt;
-    Orders[index].cgstper = cgstper ? cgstper.toString() : '';
+    Orders[index].cgstper = cgstper.toString();
     Orders[index].disc1amt = Disc1amt.toFixed(2);
-    Orders[index].disc1per = disc1per ? disc1per.toString() : '';
+    Orders[index].disc1per = disc1per.toString();
     Orders[index].disc2amt = Disc2amt.toFixed(2);
-    Orders[index].disc2per = disc2per ? disc2per.toString() : '';
+    Orders[index].disc2per = disc2per.toString();
     Orders[index].gamt = Gamt.toFixed(2);
     Orders[index].gstgamt = GstGamt.toFixed(2);
     Orders[index].igstamt = igstamt;
-    Orders[index].igstper = igstper ? igstper.toString() : '';
+    Orders[index].igstper = igstper.toString();
     Orders[index].rate = rate.toFixed(2);
     Orders[index].sgstamt = sgstamt;
-    Orders[index].sgstper = sgstper ? sgstper.toFixed(2) : '';
-    // Orders[index].itemGrpname = '';
-    // Orders[index].itemName = '';
-    // Orders[index].itemid = '';
-    // Orders[index].mstrate = '';
-    // Orders[index].pac = '';
-    // Orders[index].pcs = '';
+    Orders[index].sgstper = sgstper.toFixed(2);
     Orders[index].qty = qty.toString();
-    // Orders[index].rateperunit = '';
+    logger.log('Orders', Orders);
     setOrderList(Orders);
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
     if (isKeyboardVisible) {
       Keyboard.dismiss();
       return;
     }
     const orderList = [...OrderList];
 
-    // const isValid = validateOrderList(orderList);
-    // const isValid = orderList.every(validateObject);
-    const isValid = true;
+    const isValid = validateData(orderList);
+    const db = await getDBConnection();
 
-    console.log('isValid', isValid);
     if (isValid) {
-      // console.log('orderList', orderList);
+      if (flg == 0) {
+        const datetime = dayjs();
 
-      const datetime = dayjs();
+        const orderDate = dayjs(datetime).format('YYYY-MM-DD hh:mm:ss');
 
-      const orderDate = dayjs(datetime).format('YYYY-MM-DD hh:mm:ss');
+        const currUser = await Functions.getUser();
+        const Entryemail = currUser.entryemail;
 
-      const currUser = await Functions.getUser();
-      const entryemail = currUser.entryemail;
+        const userId =
+          UserRights == 'Agent' || UserRights == 'Client'
+            ? User.accId
+            : UserRights == 'Owner' && User.userid;
 
-      const userId =
-        UserRights == 'Agent' || UserRights == 'Client'
-          ? User.accId
-          : UserRights == 'Owner' && User.userid;
+        let agetnID = '';
 
-      let agetnID = '';
+        if (UserRights == 'Agent' || UserRights == 'Client')
+          agetnID = String(User.accId);
 
-      if (UserRights == 'Agent' || UserRights == 'Client')
-        agetnID = String(User.accId);
+        const orderId = `${dayjs(datetime).format(
+          'YYYYMMDDhhmmss',
+        )}${Math.floor(1000 + Math.random() * 9000)}`;
 
-      const orderId = `${dayjs(datetime).format('YYYYMMDDhhmmss')}${Math.floor(
-        1000 + Math.random() * 9000,
-      )}`;
+        const insertOrder = orderList.flatMap(order => {
+          const {
+            itemid,
+            itemName,
+            pcs,
+            qty,
+            amt,
+            cgstamt,
+            cgstper,
+            disc1amt,
+            disc1per,
+            disc2amt,
+            disc2per,
+            gamt,
+            gstgamt,
+            igstamt,
+            igstper,
+            itemGrpname,
+            mstrate,
+            pac,
+            rate,
+            rateperunit,
+            sgstamt,
+            sgstper,
+          } = order;
 
-      const insertOrder = orderList.flatMap(order => {
-        const {
-          itemid,
-          itemName,
-          pcs,
-          qty,
-          amt,
-          cgstamt,
-          cgstper,
-          disc1amt,
-          disc1per,
-          disc2amt,
-          disc2per,
-          gamt,
-          gstgamt,
-          igstamt,
-          igstper,
-          itemGrpname,
-          mstrate,
-          pac,
-          rate,
-          rateperunit,
-          sgstamt,
-          sgstper,
-        } = order;
-
-        let isSYNC = 0;
-        return {
-          orderId,
-          orderDate,
-          compid,
-          compname,
-          bookname,
-          accid,
-          accname,
-          areaname: User.areaname,
-          agentname,
-          agentid,
-          itemid,
-          itemName,
-          itemGrpname,
-          pcs,
-          pac,
-          qty,
-          mstrate,
-          rate,
-          rateperunit,
-          amt,
-          disc1per,
-          disc1amt,
-          disc2per,
-          disc2amt,
-          gstgamt,
-          sgstper,
-          sgstamt,
-          cgstper,
-          cgstamt,
-          igstper,
-          igstamt,
-          gamt,
-          isSYNC,
-        };
-      });
-
-      const db = await getDBConnection();
-      db.transaction(tx => {
-        insertOrder.forEach(item => {
-          const values = Object.values(item).map(value => String(value));
-          tx.executeSql(
-            'INSERT INTO saleordermst (UniqNumber, OrdDate, CompId, CompanyName, BooKName, AccID, AccName, AreaName, AgentName, AgentId, ItemId, ItemName, ItemGrpname, Pcs, Pac, Qty, MstRate, Rate, Rateperunit, Amt, Dis1per, Dis1amt, Dis2per, Dis2amt, GstGamt, SGSTPER, SGSTAMT, CGSTPER, CGSTAMT, IGSTPER, IGSTAMT, Gamt, isSYNC) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            values,
-            () => console.log('Item inserted successfully'),
-            error => console.error('Error inserting item: ', error),
-          );
+          let isSYNC = 0;
+          return {
+            Entryemail,
+            orderId,
+            orderDate,
+            compid,
+            compname,
+            bookname,
+            accid,
+            accname,
+            areaname: User.areaname,
+            agentname,
+            agentid,
+            itemid,
+            itemName,
+            itemGrpname,
+            pcs,
+            pac,
+            qty,
+            mstrate,
+            rate,
+            rateperunit,
+            amt,
+            disc1per,
+            disc1amt,
+            disc2per,
+            disc2amt,
+            gstgamt,
+            sgstper,
+            sgstamt,
+            cgstper,
+            cgstamt,
+            igstper,
+            igstamt,
+            gamt,
+            isSYNC,
+          };
         });
-      });
+
+        db.transaction(tx => {
+          insertOrder.forEach(item => {
+            const values = Object.values(item).map(value => String(value));
+            tx.executeSql(
+              'INSERT INTO saleordermst (Entryemail, UniqNumber, OrdDate, CompId, CompanyName, BooKName, AccID, AccName, AreaName, AgentName, AgentId, ItemId, ItemName, ItemGrpname, Pcs, Pac, Qty, MstRate, Rate, Rateperunit, Amt, Dis1per, Dis1amt, Dis2per, Dis2amt, GstGamt, SGSTPER, SGSTAMT, CGSTPER, CGSTAMT, IGSTPER, IGSTAMT, Gamt, isSYNC) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+              values,
+              () => console.log('Item inserted successfully'),
+              error => console.error('Error inserting item: ', error),
+            );
+          });
+        });
+      } else if (flg == 2) {
+        const insertOrder = orderList.flatMap(order => {
+          const {
+            itemid,
+            itemName,
+            pcs,
+            qty,
+            amt,
+            cgstamt,
+            cgstper,
+            disc1amt,
+            disc1per,
+            disc2amt,
+            disc2per,
+            gamt,
+            gstgamt,
+            igstamt,
+            igstper,
+            itemGrpname,
+            mstrate,
+            pac,
+            rate,
+            rateperunit,
+            sgstamt,
+            sgstper,
+          } = order;
+
+          let isSYNC = 0;
+          return {
+            Entryemail,
+            orderDate: OrdDate,
+            orderId: UniqNumber,
+            compid,
+            compname,
+            bookname,
+            accid,
+            accname,
+            areaname: User.areaname,
+            agentname,
+            agentid,
+            itemid,
+            itemName,
+            itemGrpname,
+            pcs,
+            pac,
+            qty,
+            mstrate,
+            rate,
+            rateperunit,
+            amt,
+            disc1per,
+            disc1amt,
+            disc2per,
+            disc2amt,
+            gstgamt,
+            sgstper,
+            sgstamt,
+            cgstper,
+            cgstamt,
+            igstper,
+            igstamt,
+            gamt,
+            isSYNC,
+          };
+        });
+        db.transaction(tx => {
+          insertOrder.forEach(item => {
+            const values = Object.values(item).map(value => String(value));
+            tx.executeSql(
+              'INSERT INTO saleordermst (Entryemail, UniqNumber, OrdDate, CompId, CompanyName, BooKName, AccID, AccName, AreaName, AgentName, AgentId, ItemId, ItemName, ItemGrpname, Pcs, Pac, Qty, MstRate, Rate, Rateperunit, Amt, Dis1per, Dis1amt, Dis2per, Dis2amt, GstGamt, SGSTPER, SGSTAMT, CGSTPER, CGSTAMT, IGSTPER, IGSTAMT, Gamt, isSYNC) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+              values,
+              () => console.log('Item inserted successfully'),
+              error => console.error('Error inserting item: ', error),
+            );
+          });
+        });
+      }
+
       navigation.navigate('SaleHome');
     }
+    setLoading(false);
   };
 
-  // Function to validate a single object
-  const validateObject = (obj: any) => {
-    // Skip validation for dis1 and dis2 fields
-    const {dis1, dis2, ...rest} = obj;
+  const validateData = (obj: OrderProp[]) => {
+    try {
+      obj.map((item, index) => {
+        const {disc1amt, disc1per, disc2per, disc2amt, ...rest} = item;
 
-    // Validate the rest of the fields
-    for (const key in rest) {
-      if (!rest[key] || rest[key] === '') {
-        console.log('rest[key]', rest[key]);
-        console.log('key', key);
-        const cardNum = OrderList.indexOf(obj);
-        let FieldName;
+        // Validate the rest of the fields
+        for (const key in rest) {
+          // @ts-ignore
+          if (!rest[key] || rest[key] === '') {
+            // @ts-ignore
+            console.log('rest[key]', rest[key]);
+            console.log('key', key);
+            const cardNum = index;
+            // const cardNum = OrderList.indexOf(item);
+            let FieldName;
 
-        switch (key) {
-          case 'itemName':
-            FieldName = 'Item Name';
-            break;
-          case 'itemid':
-            FieldName = 'Item Name';
-            break;
-          case 'pcs':
-            FieldName = 'Pieces';
-            break;
-          case 'pac':
-            FieldName = 'Package';
-            break;
-          case 'qty':
-            FieldName = 'Quantity';
-            break;
-          case 'rate':
-            FieldName = 'Rate';
-            break;
-          default:
+            switch (key) {
+              case 'itemName':
+                FieldName = 'Item Name';
+                break;
+              case 'itemid':
+                FieldName = 'Item Name';
+                break;
+              case 'pcs':
+                FieldName = 'Pieces';
+                break;
+              case 'pac':
+                FieldName = 'Package';
+                break;
+              case 'qty':
+                FieldName = 'Quantity';
+                break;
+              case 'rate':
+                FieldName = 'Rate';
+                break;
+              default:
+            }
+
+            throw `Card ${cardNum + 1} Field ${FieldName} is Required`;
+          }
         }
+      });
+      return true;
 
-        setToast({
-          toast: true,
-          toastMessage: `Card ${cardNum + 1} Field ${FieldName} is Required`,
-        });
-        return false;
-      }
+      // return true;
+    } catch (error) {
+      let message = 'Something went wrong!';
+      if (typeof error === 'string' && error) message = error;
+      if (error instanceof Error) message = error.message;
+      logger.toast(message);
+      return false;
     }
-    return true;
   };
 
   const handleRemoveCard = ({index}: {index: number}) => {
     const orderList = [...OrderList];
-    console.log('orderList', orderList[index]);
+
     orderList.splice(index, 1);
     setOrderList(orderList);
   };
+
+  const isHideField =
+    flg !== 1 ? (User.hidefield !== '1' ? false : true) : false;
 
   return (
     <View style={styles.page}>
@@ -553,18 +656,244 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
         <FlatList
           data={OrderList}
           renderItem={({index, item}) => (
-            <OrderCard
-              index={index}
-              item={item}
-              setValue={setValue}
-              length={OrderList.length}
-              handleRemoveCard={handleRemoveCard}
-              flg={flg}
-            />
+            <View style={styles.card}>
+              {OrderList.length > 1 && flg !== 1 ? (
+                <Pressable
+                  style={{
+                    backgroundColor: Colors.E85555,
+                    position: 'absolute',
+                    zIndex: 1000,
+                    top: -normalize(8),
+                    right: 0,
+                    borderRadius: 50,
+                    padding: normalize(5),
+                  }}
+                  onPress={() => handleRemoveCard({index})}>
+                  <Ionicons
+                    name="remove-circle-outline"
+                    size={normalize(18)}
+                    color={Colors.Black}
+                  />
+                </Pressable>
+              ) : null}
+
+              <RNCDropdown
+                Data={ItemList}
+                // @ts-ignore
+                value={Number(item.itemid)}
+                dropdownstyle={{
+                  backgroundColor: Colors.background,
+                  padding: 0,
+                  paddingHorizontal: normalize(5),
+                }}
+                selectedtextstyle={{fontSize: FontSize.font10}}
+                placeholderstyle={{fontSize: FontSize.font10}}
+                placeholderText={'Select Item'}
+                onChange={value => {
+                  // console.log('value', value);
+
+                  setValue({index, fieldName: 'item', value});
+                  // setOrderValue({index, fieldName: 'item', value});
+                }}
+                search
+                disable={flg !== 0}
+              />
+
+              <View style={{flexDirection: 'row', gap: 7}}>
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>PCS</RNCText>
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {
+                        backgroundColor: isHideField
+                          ? Colors.inpDisable
+                          : Colors.background,
+                      },
+                    ]}
+                    keyboardType="numeric"
+                    defaultValue={item.pcs}
+                    onChangeText={value => {
+                      setValue({index, fieldName: 'pcs', value});
+                    }}
+                    onEndEditing={e => {
+                      const {text} = e.nativeEvent;
+                      setValue({index, fieldName: 'pcs', value: text});
+                    }}
+                    editable={!isHideField}
+                  />
+                </View>
+
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>PAC</RNCText>
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {
+                        backgroundColor: isHideField
+                          ? Colors.inpDisable
+                          : Colors.background,
+                      },
+                    ]}
+                    keyboardType="numeric"
+                    // value={item.pac}
+                    defaultValue={item.pac}
+                    onChangeText={value => {
+                      setValue({index, fieldName: 'pac', value});
+                    }}
+                    onEndEditing={e => {
+                      const {text} = e.nativeEvent;
+                      setValue({index, fieldName: 'pac', value: text});
+                    }}
+                    editable={!isHideField}
+                  />
+                </View>
+
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>QTY</RNCText>
+
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {
+                        backgroundColor: !isHideField
+                          ? Colors.inpDisable
+                          : Colors.background,
+                      },
+                    ]}
+                    keyboardType="numeric"
+                    value={item.qty}
+                    onChangeText={value => {
+                      setValue({index, fieldName: 'qty', value});
+                    }}
+                    onEndEditing={e => {
+                      const {text} = e.nativeEvent;
+                      setValue({index, fieldName: 'qty', value: text});
+                    }}
+                    editable={isHideField}
+                  />
+                </View>
+              </View>
+
+              <View style={{flexDirection: 'row', gap: 7}}>
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>MSTRATE</RNCText>
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {
+                        backgroundColor:
+                          flg == 1 ? Colors.inpDisable : Colors.background,
+                      },
+                    ]}
+                    value={item.mstrate}
+                    editable={flg !== 1}
+                    onChangeText={value => {
+                      setValue({index, fieldName: 'mstrate', value});
+                    }}
+                  />
+                </View>
+
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>RATE</RNCText>
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {
+                        backgroundColor: Colors.inpDisable,
+                      },
+                    ]}
+                    defaultValue={item.rate}
+                    editable={false}
+                    onEndEditing={e => {
+                      const {text} = e.nativeEvent;
+                      setValue({index, fieldName: 'rate', value: text});
+                    }}
+                  />
+                </View>
+
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>DISC 1 %</RNCText>
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {backgroundColor: Colors.inpDisable},
+                    ]}
+                    keyboardType="numeric"
+                    value={item.disc1per}
+                    editable={false}
+                  />
+                </View>
+              </View>
+
+              <View style={{flexDirection: 'row', gap: 7}}>
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>DISC 2 %</RNCText>
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {
+                        backgroundColor:
+                          flg == 1 ? Colors.inpDisable : Colors.background,
+                      },
+                    ]}
+                    keyboardType="numeric"
+                    defaultValue={item.disc2per}
+                    onChangeText={value => {
+                      setValue({index, fieldName: 'disc2per', value});
+                    }}
+                    onEndEditing={e => {
+                      const {text} = e.nativeEvent;
+                      setValue({index, fieldName: 'disc2per', value: text});
+                    }}
+                    editable={flg !== 1}
+                  />
+                </View>
+
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>SGST %</RNCText>
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {backgroundColor: Colors.inpDisable},
+                    ]}
+                    value={item.sgstper}
+                    editable={false}
+                  />
+                </View>
+
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>CGST %</RNCText>
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {backgroundColor: Colors.inpDisable},
+                    ]}
+                    keyboardType="numeric"
+                    value={item.cgstper}
+                    editable={false}
+                  />
+                </View>
+
+                <View style={styles.cardContainer}>
+                  <RNCText style={styles.cardTitle}>IGST %</RNCText>
+                  <TextInput
+                    style={[
+                      styles.cardInput,
+                      {backgroundColor: Colors.inpDisable},
+                    ]}
+                    keyboardType="numeric"
+                    value={item.igstper}
+                    editable={false}
+                  />
+                </View>
+              </View>
+            </View>
           )}
           contentContainerStyle={{gap: 10, paddingTop: normalize(10)}}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={false}
+
           // keyboardShouldPersistTaps="always"
         />
       </View>
@@ -628,11 +957,13 @@ const TakeOrder: FC<TakeOrderPageProps> = ({navigation, route}) => {
           </View>
         </View>
 
-        <RNCButton
-          name="Place Order"
-          onPress={handleSubmit}
-          style={{padding: normalize(8), borderRadius: 6}}
-        />
+        {flg !== 1 && (
+          <RNCButton
+            name="Place Order"
+            onPress={handleSubmit}
+            style={{padding: normalize(8), borderRadius: 6}}
+          />
+        )}
       </View>
     </View>
   );

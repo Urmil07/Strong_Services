@@ -241,6 +241,8 @@ export const TableData = () => {
     {
       table_name: 'saleordermst',
       table_field: `OrdNo INTEGER PRIMARY KEY,
+                    Entryemail TEXT,
+                    UniqNumber TEXT,
                     OrdDate TEXT,
                     CompanyName TEXT,
                     CompId INTEGER,
@@ -274,8 +276,7 @@ export const TableData = () => {
                     IGSTPER	INTEGER,
                     IGSTAMT	INTEGER,
                     Gamt INTEGER,
-                    isSYNC INTEGER,
-                    UniqNumber INTEGER`,
+                    isSYNC INTEGER`,
     },
     {
       table_name: 'itemmst',

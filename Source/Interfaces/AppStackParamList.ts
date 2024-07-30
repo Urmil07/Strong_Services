@@ -37,6 +37,10 @@ export type AppStackParamList = {
     agentid: string;
     agentname: string;
     flg: 0 | 1 | 2; // 0: New Order  1:View Order  2:Edit Order
+    UniqNumber?: string;
+    OrdNo?: number;
+    Entryemail?: string;
+    OrdDate?: string;
   };
   ChangePassword: {
     entryemail: string;

@@ -138,8 +138,6 @@ const Home = () => {
       UserRights = User?.userrights;
       setUserRights(UserRights);
 
-      // FIXME: Remove Return
-      // return;
       if (UserRights == 'Owner') {
         EstrongReport({EntryEmail: User?.entryemail});
       } else if (UserRights == 'Client' || UserRights == 'Agent') {
@@ -201,8 +199,7 @@ const Home = () => {
                 console.log('ActiveUser?.arepsaleos', ActiveUser);
                 if (!ActiveUser?.arepsaleos) {
                   isLocked('Payable');
-                  // FIXME: uncomment this line
-                  // return;
+                  return;
                 }
                 navigation.navigate('OSListScreen', {
                   type: 'purchase',
@@ -228,8 +225,7 @@ const Home = () => {
               onPress={() => {
                 if (!ActiveUser?.areppurcos) {
                   isLocked('Recivable');
-                  // FIXME: uncomment this line
-                  // return;
+                  return;
                 }
 
                 navigation.navigate('OSListScreen', {type: 'sale'});
@@ -328,7 +324,7 @@ const Home = () => {
               </RNCText>
             </Pressable>
 
-            <Pressable
+            {/* <Pressable
               style={styles.box}
               // onPress={() =>
               //   navigation.navigate('ColdList', {type: 'summary'})
@@ -347,17 +343,17 @@ const Home = () => {
                 size={FontSize.font16}>
                 Return Order
               </RNCText>
-            </Pressable>
+            </Pressable> */}
           </View>
         </View>
 
-        <RNCText
+        {/* <RNCText
           style={{marginVertical: normalize(12)}}
           align="center"
           family={FontFamily.Black}
           size={FontSize.font18}>
           Cold/Warehouse Reports
-        </RNCText>
+        </RNCText> */}
 
         <View style={{padding: normalize(10), gap: 6}}>
           {/* <View
@@ -400,7 +396,7 @@ const Home = () => {
               </Pressable>
             </View> */}
 
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+          {/* <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
             <Pressable
               style={styles.box}
               onPress={() => {
@@ -424,7 +420,7 @@ const Home = () => {
                 Stock Summ
               </RNCText>
             </Pressable>
-          </View>
+          </View> */}
         </View>
       </ScrollView>
       <SafeAreaView />

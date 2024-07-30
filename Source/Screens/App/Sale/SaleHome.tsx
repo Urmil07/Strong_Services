@@ -19,15 +19,19 @@ import {
   getSaleData,
   setFilterSaleAccountList,
   setLoading,
+  sycOrders,
   useSaleStore,
 } from '@Actions';
 
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {RNCText} from 'Common';
 import {SaleHomePageProps} from '@/Interfaces/AppStackParamList';
+import {logger} from '@Utils';
 import normalize from 'react-native-normalize';
+import {useIsFocused} from '@react-navigation/native';
 
 const SaleHome: FC<SaleHomePageProps> = ({navigation}) => {
+  const isFocused = useIsFocused();
   const {MasterSaleAccountList, OrderList} = useSaleStore();
   const [isPending, startTransition] = useTransition();
 
@@ -36,18 +40,18 @@ const SaleHome: FC<SaleHomePageProps> = ({navigation}) => {
       headerTitle: 'Sale',
       headerBackTitleVisible: false,
       headerTransparent: false,
-      headerSearchBarOptions: {
-        shouldShowHintSearchIcon: false,
-        headerIconColor: Colors.WText,
-        textColor: Colors.WText,
-        tintColor: Colors.WText,
-        onChangeText(e) {
-          handleSearch(e.nativeEvent.text);
-        },
-      },
+      // headerSearchBarOptions: {
+      //   shouldShowHintSearchIcon: false,
+      //   headerIconColor: Colors.WText,
+      //   textColor: Colors.WText,
+      //   tintColor: Colors.WText,
+      //   onChangeText(e) {
+      //     handleSearch(e.nativeEvent.text);
+      //   },
+      // },
       headerRight: () => (
         <View style={{gap: 10, flexDirection: 'row'}}>
-          <Pressable>
+          {/* <Pressable>
             <FontAwesome5
               name="filter"
               size={normalize(20)}
@@ -60,20 +64,21 @@ const SaleHome: FC<SaleHomePageProps> = ({navigation}) => {
               size={normalize(20)}
               color={Colors.WText}
             />
-          </Pressable>
+          </Pressable> */}
         </View>
       ),
     });
   }, [navigation]);
 
   useEffect(() => {
+    if (!isFocused) return;
     startTransition(() => {
       getOrders().finally(() => getSaleData());
       // .finally(() => setLoading(false));
     });
 
     // getSaleAccounts();
-  }, []);
+  }, [isFocused]);
 
   const {format} = new Intl.NumberFormat('hi-IN', {
     style: 'currency',
@@ -95,13 +100,42 @@ const SaleHome: FC<SaleHomePageProps> = ({navigation}) => {
     setFilterSaleAccountList(filteredResults);
     // dispatch(SetFilterList(filteredResults));
   };
+
+  const handleSubmitOrder = async () => {
+    const response = await sycOrders();
+
+    logger.log('response', response);
+  };
+
   return (
     <View style={styles.container}>
       <View style={{flex: 1}}>
         <FlatList
           data={OrderList}
           renderItem={({item, index}) => (
-            <Pressable style={styles.card} onPress={() => null}>
+            <Pressable
+              style={styles.card}
+              onPress={() => {
+                // logger.log('item', item);
+                // return;
+                navigation.navigate('TakeOrder', {
+                  accid: String(item.AccID),
+                  accname: item.AccName,
+                  agentid: String(item.AgentId),
+                  agentname: item.AgentName,
+                  areaname: item.AreaName,
+                  bookid: String(item.BooKId),
+                  bookname: item.BooKName,
+                  compid: String(item.CompId),
+                  compname: item.CompanyName,
+                  // flg: item.isSYNC ? 1 : 2,
+                  flg: 1,
+                  UniqNumber: item.UniqNumber,
+                  OrdNo: item.OrdNo,
+                  Entryemail: item.Entryemail,
+                  OrdDate: item.OrdDate,
+                });
+              }}>
               <RNCText style={styles.cardTitle}>{item.AccName}</RNCText>
               <View
                 style={{flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -140,12 +174,16 @@ const SaleHome: FC<SaleHomePageProps> = ({navigation}) => {
               </View>
             </Pressable>
           )}
+          contentContainerStyle={{gap: 10}}
         />
       </View>
+
       <View style={styles.bottomContainer}>
         <Pressable
           style={[styles.bottomBtn, {backgroundColor: Colors.transparent}]}>
-          <RNCText family={FontFamily.Bold}>Submit Order</RNCText>
+          <RNCText family={FontFamily.Bold} onPress={handleSubmitOrder}>
+            Submit Order
+          </RNCText>
         </Pressable>
         <Pressable
           style={styles.bottomBtn}

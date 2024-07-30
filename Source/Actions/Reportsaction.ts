@@ -9,7 +9,7 @@ import {
   Datapurco,
   Datasaleo,
 } from '@/Interfaces/ReportInterface';
-import {Functions, setDate} from '@Utils';
+import {Functions, logger, setDate} from '@Utils';
 import {setLoading, useAppStore} from './Appaction';
 
 import {Dayjs} from 'dayjs';
@@ -272,7 +272,7 @@ export const GetOSData = async ({
 
     const ExtractData = id
       ? '*'
-      : 'invdate, invnochr, accid, accname, compid, compname, cityname, billamt, areaname';
+      : 'invdate, invnochr, accid, accname, compid, compname, cityname, billamt, areaname, mobile';
 
     const SelectedComp = DBState?.FilterCompany.map(company => {
       if (company.selected) {
@@ -392,7 +392,7 @@ export const GetOSData = async ({
       return acc;
     }, []);
 
-    // thunkAPI.dispatch(SetOSData(returnData));
+
     setOSData(returnData);
 
     resolve();

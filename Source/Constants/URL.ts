@@ -11,5 +11,6 @@ const URL = {
   EstrongReport: 'estrongreport.php',
   EstrongUpdatepwd: 'estrongupdatepwd.php',
   EstrongAccrights: 'estronguaccrights.php',
+  Estrongaddord: 'estrongaddord.php',
 };
 export default URL;

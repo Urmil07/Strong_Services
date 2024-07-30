@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "start": "react-native start -- --reset-cache",
-    "android": "react-native run-android -- --reset-cache",
-    "androidClean": "cd android && ./gradlew clean && cd ..",
+    "aos": "react-native run-android -- --reset-cache",
+    "aos:clean": "cd android && ./gradlew clean && cd ..",
     "androidBuild": "cd android && ./gradlew assembleRelease && cd ..",
-    "androidUninstall": "adb shell pm uninstall com.strong_services",
+    "aos:uninstall": "adb shell pm uninstall com.strong_services",
     "ios": "react-native run-ios -- --reset-cache",
     "podInstall": "npx pod-install ios && watchman watch-del '/Users/urmil/RN/Strong_Services' ; watchman watch-project '/Users/urmil/RN/Strong_Services'",
     "watchman": "watchman watch-del '/Users/urmil/RN/Strong_Services' ; watchman watch-project '/Users/urmil/RN/Strong_Services'",

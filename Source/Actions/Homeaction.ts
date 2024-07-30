@@ -52,7 +52,7 @@ export const EstrongReport = async ({
       EndPoint: URL.EstrongReport,
       Params: {entryemail: EntryEmail, accid: AccId, jsonstr: stgTblData},
     });
-    // logger.log('response', response);
+    logger.log('response', response);
 
     if (response.status !== 200) {
       setToast({
